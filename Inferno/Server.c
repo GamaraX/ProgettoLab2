@@ -15,10 +15,55 @@
 #include "../Purgatorio/Protocolli.h"
 
 //definizione funzioni
+
+int CercaUtente (char* utente) {
+    //implementare lista
+    return 0;
+}
+
+//
 void* asdrubale (void* arg) {
+    //
     int fd_client = *(int*) arg;
+    char type;
+
+    //
+    char* input = Ade(fd_client, &type);
+
+    //
+    while ((type != MSG_REGISTRA_UTENTE && type != MSG_FINE) || (CercaUtente(input) == 0)) {
+        //
+        if (CercaUtente(input) == 0) 
+            Caronte(fd_client, "Scrivi un altro nome utente: quello inviato è già stato preso\n", MSG_ERR);
+
+        //
+        Caronte(fd_client, "Errore: devi prima registrarti\n", MSG_ERR);
+        //
+        free(input);
+        //
+        input = Ade(fd_client, &type);
+    }
+    //
+    if (type == MSG_FINE) {
+        pthread_exit(NULL);
+    }
+    /*Funzione dove aggiungo in lista il nome utente*/
+
+    free(input);
+    //
+    while(type != MSG_FINE && type != MSG_CANCELLA_UTENTE) {
+        input = Ade(fd_client, &type);
+        //QUI DENTRO IL CLIENT GIOCA
+    }
+    //
+    if (type == MSG_CANCELLA_UTENTE) {
+        //rimuovo dalla lista
+        //pthread_exit
+    }
     return NULL;
 }
+
+//
 void* Argo(void* arg) {
     return NULL;
 }

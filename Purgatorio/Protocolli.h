@@ -12,6 +12,7 @@
 #define MSG_LOGIN_UTENTE 'L'
 #define MSG_POST_BACHECA 'H'
 #define MSG_SHOW_BACHECA 'S'
+#define MSG_FINE 'X'
 #define HELP_MESSAGE "I comandi a disposizione sono i seguenti:"
 
 //Definizione funzione che invia messaggi
