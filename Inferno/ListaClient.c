@@ -23,7 +23,8 @@ void Aggiungi_Giocatore(Lista_Giocatori* lista, char* nome, int fd) {
     //Associo il thread
     i->thread = pthread_self();
     //Associo il nome
-    i->nome = (char*) malloc (strlen(nome)+1); 
+    i->nome = (char*) malloc (strlen(nome)+1);
+    strcpy(i->nome,nome);
     //Assegno i punti (che sono 0 all'inizio della partita)
     i->punti = 0;
     //Associo il fd
@@ -76,6 +77,8 @@ int CercaUtente (Lista_Giocatori lista, char* utente) {
     if (lista == NULL) 
         return 1;
     //Cerco nome utente
+    printf("nome lista:%s\n",lista->nome);
+    printf("utente cercato:%s\n", utente);
     if (strcmp(utente, lista->nome) == 0) {
         return 0;
     }

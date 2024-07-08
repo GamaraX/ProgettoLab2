@@ -82,6 +82,7 @@ int main(int argc, char* argv[]) {
         //gestione errori su cosa viene passata come stringa (caratteri validi, se ci sono caratteri e non solo spazi,) (isdigit() e isalpha())
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
+            free(cmz);
             continue;
         }
         if (strcmp(cmz, "matrice\n") == 0) {
@@ -114,6 +115,8 @@ int main(int argc, char* argv[]) {
             char type = 'd';
             token = Ade(fd_server,&type);
             printf("%s\n",token);
+            free(cmz);
+            free(token);
             continue;
         }
         if (strcmp(token, "p") == 0) {

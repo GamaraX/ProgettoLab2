@@ -28,6 +28,7 @@ void* asdrubale (void* arg) {
     //Ricevo i messaggi dal client e li memorizzo in 'input'
     char* input = Ade(fd_client, &type);
     int prova = CercaUtente(list, input);
+    printf("risultato prova1:%d\n", prova);
     //Controllo se il tipo del primo messaggio dal client è un comando di fine o una registrazione, in questo caso controllo se
     //il nome utente inviato come input è uguale a quello di un altro utente o meno. Entro nel while in uno di questi casi
     while ((type != MSG_REGISTRA_UTENTE && type != MSG_FINE) || prova == 0) {
@@ -43,17 +44,18 @@ void* asdrubale (void* arg) {
         //Memorizzo in 'input' il nuovo messaggio inviato dal client
         input = Ade(fd_client, &type);
         prova = CercaUtente(list, input);
+        printf("%s\n", input);
+        printf("risultato prova2:%d\n",prova );
     }
     //È stato inviato il comando fine: termino il thread del client
     if (type == MSG_FINE) {
         pthread_exit(NULL);
     }
     //Aggiungo il giocatore alla lista
-    printf("%s\n",input);
+    //printf("%s\n",input);
     Aggiungi_Giocatore(&list, input, fd_client);
     printf("lista giocatori:%d\n",Numero_Giocatori(list));
     Caronte(fd_client, "Nome utente valido", MSG_OK);
-
     free(input);
     //Controllo se il tipo del messaggio è fine o Cancella utente: fino a che non è nessuno dei due, il client gioca e può inviare 
     //tutti i comandi a sua disposizione
