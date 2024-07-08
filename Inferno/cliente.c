@@ -13,10 +13,10 @@
 #include <arpa/inet.h>
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
-
+#include "../Purgatorio/ListaClient.h"
 
 int main(int argc, char* argv[]) {
-    int retvalue;
+    //                   int retvalue;
     //controllo se il numero di parametri passati è giusto
     if (argc != 3) {
         perror("Numero sbagliato di parametri passati!");
@@ -104,9 +104,14 @@ int main(int argc, char* argv[]) {
         //sezione della tokenizzazione
         char* token;
         token = strtok(cmz, " ");
+        printf("%s\n",token);
         if (strcmp(token, "registra_utente") == 0) {
-            strtok(NULL, "\n");
+            token = strtok(NULL, "\n");
             printf("return 0");
+            Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
+            char  type = 'd';
+            token = Ade(fd_server,&type);
+            printf("ricevuto");
             continue;
         }
         if (strcmp(token, "p") == 0) {

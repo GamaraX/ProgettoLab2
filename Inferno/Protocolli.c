@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
+#include "../Purgatorio/ListaClient.h"
 
 //Definizione funzione che invia messaggi
 int Caronte(int fd, char* msg, char carattere) {

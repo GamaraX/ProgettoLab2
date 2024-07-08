@@ -11,21 +11,25 @@ SORGENTE = ../Inferno/
 # Header File
 HDRS1 = $(HEADER)macro.h
 HDRS2 = $(HEADER)Protocolli.h
+HDRS3 = $(HEADER)ListaClient.h 
 
 # Eseguibili
 SERVER = Server
 CLIENT = cliente
 PROTO = Protocolli
+LISTA = ListaClient
 
 # File oggetto
 OBJS = $(SERVER).o
 OBJC = $(CLIENT).o
 OBJP = $(PROTO).o
+OBJL = $(LISTA).o 
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
 SRCC = $(SORGENTE)$(CLIENT).c
 SRCP = $(SORGENTE)$(PROTO).c
+SRCL = $(SORGENTE)$(LISTA).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
@@ -33,29 +37,31 @@ all: $(SERVER) $(CLIENT) objclear otherclean
 # Dipendenza file eseguibile
 $(SERVER): $(OBJS) 
 	@echo Server
-	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) -o $(SERVER)
+	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) -o $(SERVER)
 
 $(CLIENT): $(OBJC) 
 	@echo Client
-	@$(CC) $(CFLAGS) $(OBJC) $(OBJP) -o $(CLIENT)
+	@$(CC) $(CFLAGS) $(OBJC) $(OBJP) $(OBJL) -o $(CLIENT)
 
 # Dipendenza file oggetto
 
 # Server.o
-$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) 
-	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCP) $(HDRS1) $(HDRS2)
+$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3)
+	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(HDRS1) $(HDRS2) $(HDRS3)
 
-$(OBJC): $(SRCC) $(HDRS1) $(HDRS2) 
-	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCP) $(HDRS1) $(HDRS2)
+$(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3)
+	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCL) $(SRCP) $(HDRS1) $(HDRS2) $(HDRS3)
 
-$(OBJP): $(SRCP) $(HDRS1) $(HDRS2) 
+$(OBJP): $(SRCP) $(HDRS1) $(HDRS2)
 	@$(CC) $(CFLAGS) -c $(SRCP) $(HDRS1) $(HDRS2)
 
+$(OBJL): $(SRCL) $(HDRS1) $(HDRS3)
+	@$(CC) $(CFLAGS) -c $(SRCL) $(HDRS1) $(HDRS3)
 clean: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(SERVER) $(CLIENT)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL)
 
 otherclean:
 	@rm -f $(HDRS1).gch $(HDRS2).gch
