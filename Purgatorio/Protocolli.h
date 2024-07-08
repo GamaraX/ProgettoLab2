@@ -19,4 +19,11 @@
 int Caronte(int fd, char* msg, char carattere);
 
 //Definizione funzione che riceve messaggi
-char* Ade(int fd, char* carattere);
+char* Ade(int fd);
+
+
+typedef struct Msg{
+    char* msg;
+    char* type;
+    int length;
+}Msg;

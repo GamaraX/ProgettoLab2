@@ -27,13 +27,19 @@ int Caronte(int fd, char* msg, char carattere) {
 }
 
 //Definizione funzione che riceve messaggi
-char* Ade(int fd, char* carattere) {
+Msg* Ade(int fd) {
     int retvalue, length;
-    
+    Msg* msg = (Msg*)malloc(sizeof(Msg));
+    char* carattere = malloc(sizeof(char));
     SYSC(retvalue, read(fd, &length, sizeof(int)), "Errore in read lunghezza messaggio");
     SYSC(retvalue, read(fd, carattere, sizeof(char)), "Errore in read tipo messaggio");
     char* mess = (char*) malloc(length* sizeof(char));
     SYSC(retvalue, read(fd, mess, length), "Errore in read messaggio");
-    return mess;
+
+    msg->msg = mess;
+    msg->length = length;
+    msg->type = carattere;
+    return msg;
 }
+
 

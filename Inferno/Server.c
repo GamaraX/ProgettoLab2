@@ -15,11 +15,11 @@
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
+#include "../Purgatorio/Asdrubale.h"
 
-//Creo la lista di giocatori
-Lista_Giocatori list;
 //Definizione funzioni
 
+/*
 void* asdrubale (void* arg) {
     //
     int fd_client = *(int*) arg;
@@ -55,6 +55,10 @@ void* asdrubale (void* arg) {
     //printf("%s\n",input);
     Aggiungi_Giocatore(&list, input, fd_client);
     printf("lista giocatori:%d\n",Numero_Giocatori(list));
+    printf("fd:%d\n",list->fd_client);
+    printf("nome:%s\n",list->nome);
+    printf("punti:%d\n",list->punti);
+    printf("thread:%lu\n",list->thread);
     Caronte(fd_client, "Nome utente valido", MSG_OK);
     free(input);
     //Controllo se il tipo del messaggio è fine o Cancella utente: fino a che non è nessuno dei due, il client gioca e può inviare 
@@ -62,10 +66,6 @@ void* asdrubale (void* arg) {
     while(type != MSG_FINE && type != MSG_CANCELLA_UTENTE) {
         input = Ade(fd_client, &type);
         //QUI DENTRO IL CLIENT GIOCA
-
-
-
-
 
 
 
@@ -82,11 +82,13 @@ void* asdrubale (void* arg) {
     printf("lista giocatori:%d\n",Numero_Giocatori(list));
     return NULL;
 }
+*/
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
     return NULL;
 }
+
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
@@ -94,8 +96,10 @@ int main (int argc, char* argv[]) {
     //Creo una Matrice 4x4
 
 
-    //Creo la lista vuota
-    list = NULL;
+    //Creo la lista vuota di Giocatori
+    //Creo la lista di giocatori
+    Lista_Giocatori list = NULL;
+
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;
     
@@ -131,7 +135,6 @@ int main (int argc, char* argv[]) {
         SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, &fdtemp), "Errore pthread create collegato client");
     }
 
-    //
-
     return 0;
 }
+
