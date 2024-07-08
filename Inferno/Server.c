@@ -14,6 +14,7 @@
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Matrice.h"
 
 //Creo la lista di giocatori
 Lista_Giocatori list;
@@ -26,27 +27,31 @@ void* asdrubale (void* arg) {
     printf("client:%d, connesso\n",fd_client);
     //Ricevo i messaggi dal client e li memorizzo in 'input'
     char* input = Ade(fd_client, &type);
-
+    int prova = CercaUtente(list, input);
     //Controllo se il tipo del primo messaggio dal client è un comando di fine o una registrazione, in questo caso controllo se
     //il nome utente inviato come input è uguale a quello di un altro utente o meno. Entro nel while in uno di questi casi
-    while ((type != MSG_REGISTRA_UTENTE && type != MSG_FINE) || (CercaUtente(list, input) == 0)) {
+    while ((type != MSG_REGISTRA_UTENTE && type != MSG_FINE) || prova == 0) {
         //Controllo subito se il nome utente è uguale a quello di un altro client oppure no
-        if (CercaUtente(list, input) == 0) 
+        if (prova == 0) 
             Caronte(fd_client, "Scrivi un altro nome utente: quello inviato è già stato preso\n", MSG_ERR);
-
-        //Il primo comando inviato non è la registrazione dell'utente: invio il messaggio al client e gli permetto di riprovare a registrarsi
-        Caronte(fd_client, "Errore: devi prima registrarti\n", MSG_ERR);
+        else{
+            //Il primo comando inviato non è la registrazione dell'utente: invio il messaggio al client e gli permetto di riprovare a registrarsi
+            Caronte(fd_client, "Errore: devi prima registrarti\n", MSG_ERR);
+        }
         //Libero lo spazio di memoria collegato ad 'input'
         free(input);
         //Memorizzo in 'input' il nuovo messaggio inviato dal client
         input = Ade(fd_client, &type);
+        prova = CercaUtente(list, input);
     }
     //È stato inviato il comando fine: termino il thread del client
     if (type == MSG_FINE) {
         pthread_exit(NULL);
     }
     //Aggiungo il giocatore alla lista
+    printf("%s\n",input);
     Aggiungi_Giocatore(&list, input, fd_client);
+    printf("lista giocatori:%d\n",Numero_Giocatori(list));
     Caronte(fd_client, "Nome utente valido", MSG_OK);
 
     free(input);
@@ -67,9 +72,12 @@ void* asdrubale (void* arg) {
     }
     //Se il tipo del messaggio è CANCELLA_UTENTE allora elimino l'utente dalla lista e chiudo il thread
     if (type == MSG_CANCELLA_UTENTE) {
-        Rimuovi_Giocatore(list, pthread_self());
+        Rimuovi_Giocatore(&list, pthread_self());
         pthread_exit(NULL);
     }
+    Rimuovi_Giocatore(&list, pthread_self());
+    printf("Chiusura client\n");
+    printf("lista giocatori:%d\n",Numero_Giocatori(list));
     return NULL;
 }
 
@@ -80,6 +88,9 @@ void* Argo(void* arg) {
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
+
+    //Creo una Matrice 4x4
+
 
     //Creo la lista vuota
     list = NULL;

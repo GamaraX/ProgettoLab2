@@ -14,6 +14,7 @@
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Matrice.h"
 
 int main(int argc, char* argv[]) {
     //                   int retvalue;
@@ -67,7 +68,6 @@ int main(int argc, char* argv[]) {
 
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
-
         //leggo il messaggio di input che l'utente scrive (d)al client
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
 
@@ -89,7 +89,10 @@ int main(int argc, char* argv[]) {
             continue;
         }
         if (strcmp(cmz, "fine\n") == 0) {
-            printf("fai qualcosa");
+            Caronte(fd_server, "Chiusura client", MSG_FINE);
+            close(fd_server);
+            exit(EXIT_SUCCESS);
+            printf("Comando fine");
             return 0;
         }
         if (strcmp(cmz, "cancella_registrazione\n") == 0) {
@@ -108,8 +111,9 @@ int main(int argc, char* argv[]) {
             token = strtok(NULL, "\n");
             //printf("return 0\n");         DEBUGG
             Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-            char  type = 'd';
+            char type = 'd';
             token = Ade(fd_server,&type);
+            printf("%s\n",token);
             continue;
         }
         if (strcmp(token, "p") == 0) {

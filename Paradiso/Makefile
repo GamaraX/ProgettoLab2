@@ -72,4 +72,16 @@ objclear:
 	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM)
 
 otherclean:
-	@rm -f $(HDRS1).gch $(HDRS2).gch
+	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch
+
+run:
+	@./$(SERVER) 127.0.0.1 2000
+
+run2:
+	@./$(SERVER) 127.0.0.1 2001
+
+client:
+	@./$(CLIENT) 127.0.0.1 2000
+
+client2:
+	@./$(CLIENT) 127.0.0.1 2001

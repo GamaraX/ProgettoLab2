@@ -14,6 +14,7 @@
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Matrice.h"
 
 //Definisco funzione che aggiunge giocatori
 void Aggiungi_Giocatore(Lista_Giocatori* lista, char* nome, int fd) {
@@ -33,25 +34,28 @@ void Aggiungi_Giocatore(Lista_Giocatori* lista, char* nome, int fd) {
     return;
 }
 
-int Rimuovi_Giocatore(Lista_Giocatori lista, pthread_t tid) {
+int Rimuovi_Giocatore(Lista_Giocatori* lista, pthread_t tid) {
     //Caso base
     if (lista == NULL)
         return 1;
     //Controllo se il tid coincide
-    if (lista->thread == tid) {
-        Lista_Giocatori temp = lista;
-        lista = lista->next;
+    if ((*lista)->thread == tid) {
+        printf("Giocatore eliminato\n");
+        Giocatore* temp = *lista;
+        *lista = (*lista)->next;
         free(temp);
+        return 0;
     }
     //Cerco il prossimo tid nella lista
-    if (lista->next->thread == tid) {
-        free(lista->next->nome);
-        Lista_Giocatori temp = lista->next->next;
-        free(lista->next);
-        lista->next = temp;
+    if ((*lista)->next->thread == tid) {
+        free((*lista)->next->nome);
+        Lista_Giocatori temp = (*lista)->next->next;
+        free((*lista)->next);
+        (*lista)->next = temp;
         free(temp);
+        return 0;
     }
-    return Rimuovi_Giocatore(lista->next, tid);
+    return Rimuovi_Giocatore(&(*lista)->next, tid);
 }
 
 //Definisco una funzione che conta il numero di giocatori
@@ -72,7 +76,7 @@ int CercaUtente (Lista_Giocatori lista, char* utente) {
     if (lista == NULL) 
         return 1;
     //Cerco nome utente
-    if (strcmp(utente, lista->nome)) {
+    if (strcmp(utente, lista->nome) == 0) {
         return 0;
     }
     //Cerca il prossimo nome utente nella lista
