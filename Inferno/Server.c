@@ -17,7 +17,57 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/Asdrubale.h"
 
+
+
 //Definizione funzioni
+void* asdrubale (void* arg) {
+    //Fd del client
+    int fd_client = *(int*) arg;
+    Giocatore giocatore;
+    printf("Connesso client su fd: %d\n", fd_client);
+
+    Msg* msg;
+
+    while (1) {
+        msg = Ade(fd_client);
+        
+        char type = (char)*msg->type;
+        printf("%c\n", type);
+        switch(type){
+            case MSG_REGISTRA_UTENTE:
+                printf("Messaggio registrazione ricevuto\n");
+                break;
+            case MSG_FINE:
+                
+                break;
+            //Aggiungere altri casi
+            default:
+                printf("Comando non riconosciuto!");
+                //Invia messaggio comando sconosciuto?
+                break;
+        }
+
+        
+        free(msg->msg);
+        free(msg->type);
+    }
+
+
+    /*while(1){
+        int logged_in = 0;
+        while(!logged_in){
+
+
+            logged_in = 1;//sei riuscito a loggarti
+        }
+        int in_game = 1;
+        //passi a gioco (sei loggato)        
+        while(in_game) {
+            
+
+        }
+    }*/
+}
 
 /*
 void* asdrubale (void* arg) {
@@ -98,7 +148,7 @@ int main (int argc, char* argv[]) {
 
     //Creo la lista vuota di Giocatori
     //Creo la lista di giocatori
-    Lista_Giocatori list = NULL;
+    //Lista_Giocatori list = NULL;
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;
@@ -132,6 +182,7 @@ int main (int argc, char* argv[]) {
         int fdtemp;
         pthread_t tidtemp;
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
+
         SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, &fdtemp), "Errore pthread create collegato client");
     }
 

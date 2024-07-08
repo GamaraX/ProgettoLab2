@@ -17,7 +17,6 @@
 #include "../Purgatorio/Matrice.h"
 
 
-
 void* asdrubale (void* arg) {
     //Fd del client
     int fd_client = *(int*) arg;
@@ -30,10 +29,7 @@ void* asdrubale (void* arg) {
         msg = Ade(fd_client);
         printf("%s", msg->msg);
         
-        switch(msg->type){
-            default:
-                break;
-        }
+
 
         
         free(msg->msg);

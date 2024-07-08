@@ -112,11 +112,8 @@ int main(int argc, char* argv[]) {
             token = strtok(NULL, "\n");
             //printf("return 0\n");         DEBUGG
             Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-            char type = 'd';
-            token = Ade(fd_server,&type);
+            //token = Ade(fd_server);
             printf("%s\n",token);
-            free(cmz);
-            free(token);
             continue;
         }
         if (strcmp(token, "p") == 0) {

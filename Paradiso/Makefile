@@ -13,6 +13,7 @@ HDRS1 = $(HEADER)macro.h
 HDRS2 = $(HEADER)Protocolli.h
 HDRS3 = $(HEADER)ListaClient.h
 HDRS4 = $(HEADER)Matrice.h
+HDSR5 = $(HEADER)Asdrubale.h
 
 # Eseguibili
 SERVER = Server
@@ -20,6 +21,7 @@ CLIENT = cliente
 PROTO = Protocolli
 LISTA = ListaClient
 MATRICE = Matrice
+ASDRU = Asdrubale
 
 # File oggetto
 OBJS = $(SERVER).o
@@ -27,6 +29,7 @@ OBJC = $(CLIENT).o
 OBJP = $(PROTO).o
 OBJL = $(LISTA).o
 OBJM = $(MATRICE).o
+OBJA = $(ASDRU).o
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
@@ -34,6 +37,7 @@ SRCC = $(SORGENTE)$(CLIENT).c
 SRCP = $(SORGENTE)$(PROTO).c
 SRCL = $(SORGENTE)$(LISTA).c
 SRCM = $(SORGENTE)$(MATRICE).c
+SRCA = $(SORGENTE)$(ASDRU).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
@@ -65,14 +69,17 @@ $(OBJL): $(SRCL) $(HDRS1) $(HDRS3)
 $(OBJM): $(SRCM) $(HDRS1) $(HDRS4)
 	@$(CC) $(CFLAGS) -c $(SRCM) $(HDRS1) $(HDRS4)
 
+$(OBJA): $(SRCA) $(HDRS1) $(HDSR5)
+	@$(CC) $(CFLAGS) -c $(SRCA) $(HDRS1) $(HDSR5)
+
 clean: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(SERVER) $(CLIENT)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJA) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJA)
 
 otherclean:
-	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch
+	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDSR5).gch
 
 run:
 	@./$(SERVER) 127.0.0.1 2000
