@@ -11,25 +11,29 @@ SORGENTE = ../Inferno/
 # Header File
 HDRS1 = $(HEADER)macro.h
 HDRS2 = $(HEADER)Protocolli.h
-HDRS3 = $(HEADER)ListaClient.h 
+HDRS3 = $(HEADER)ListaClient.h
+HDRS4 = $(HEADER)Matrice.h
 
 # Eseguibili
 SERVER = Server
 CLIENT = cliente
 PROTO = Protocolli
 LISTA = ListaClient
+MATRICE = Matrice
 
 # File oggetto
 OBJS = $(SERVER).o
 OBJC = $(CLIENT).o
 OBJP = $(PROTO).o
-OBJL = $(LISTA).o 
+OBJL = $(LISTA).o
+OBJM = $(MATRICE).o
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
 SRCC = $(SORGENTE)$(CLIENT).c
 SRCP = $(SORGENTE)$(PROTO).c
 SRCL = $(SORGENTE)$(LISTA).c
+SRCM = $(SORGENTE)$(MATRICE).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
@@ -57,11 +61,15 @@ $(OBJP): $(SRCP) $(HDRS1) $(HDRS2)
 
 $(OBJL): $(SRCL) $(HDRS1) $(HDRS3)
 	@$(CC) $(CFLAGS) -c $(SRCL) $(HDRS1) $(HDRS3)
+
+$(OBJM): $(SRCM) $(HDRS1) $(HDRS4)
+	@$(CC) $(CFLAGS) -c $(SRCM) $(HDRS1) $(HDRS4)
+
 clean: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(SERVER) $(CLIENT)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM)
 
 otherclean:
 	@rm -f $(HDRS1).gch $(HDRS2).gch

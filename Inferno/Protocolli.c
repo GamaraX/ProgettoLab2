@@ -30,9 +30,9 @@ char* Ade(int fd, char* carattere) {
     int retvalue, length;
     
     SYSC(retvalue, read(fd, &length, sizeof(int)), "Errore in read lunghezza messaggio");
-    SYSC(retvalue, read(fd, carattere, sizeof(char)), "Errore in read lunghezza messaggio");
+    SYSC(retvalue, read(fd, carattere, sizeof(char)), "Errore in read tipo messaggio");
     char* mess = (char*) malloc(length* sizeof(char));
-    SYSC(retvalue, read(fd, mess, length), "Errore in read lunghezza messaggio");
+    SYSC(retvalue, read(fd, mess, length), "Errore in read messaggio");
     return mess;
 }
 

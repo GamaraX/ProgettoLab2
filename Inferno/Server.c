@@ -23,7 +23,7 @@ void* asdrubale (void* arg) {
     //
     int fd_client = *(int*) arg;
     char type;
-
+    printf("client:%d, connesso\n",fd_client);
     //Ricevo i messaggi dal client e li memorizzo in 'input'
     char* input = Ade(fd_client, &type);
 
