@@ -65,7 +65,19 @@ int main(int argc, char* argv[]) {
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
-
+        int logged_in = 0;
+        while(!logged_in){
+            
+            //provi a loggarti
+            //se logghi=>
+            logged_in=1;
+        }
+        int in_game = 1;
+        while(in_game){
+            //finchè in game...
+           
+            in_game = 0;
+        }
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
         //leggo il messaggio di input che l'utente scrive (d)al client
