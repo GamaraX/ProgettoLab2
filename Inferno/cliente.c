@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
     while(1) {
         ssize_t nread;
         int logged_in = 0;
+        
         while(!logged_in){
             
             //provi a loggarti
@@ -78,11 +79,12 @@ int main(int argc, char* argv[]) {
            
             in_game = 0;
         }
+        
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
         //leggo il messaggio di input che l'utente scrive (d)al client
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
-
+        
         //ciclo per controllare se tutti i caratteri sono lettere o numeri -> controllo per registra_utente
         /*for (int i = 0; i < strlen(cmz)-1; i++) {
             if(isdigit(cmz[i]) == 0 || isalpha(cmz[i] == 0)) {
@@ -92,6 +94,10 @@ int main(int argc, char* argv[]) {
         }
         */
         //gestione errori su cosa viene passata come stringa (caratteri validi, se ci sono caratteri e non solo spazi,) (isdigit() e isalpha())
+        
+        //Creo un variabile che memorizza il messaggio di ritorno dal server
+        Msg* messret;
+
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
             free(cmz);
@@ -124,8 +130,10 @@ int main(int argc, char* argv[]) {
             token = strtok(NULL, "\n");
             //printf("return 0\n");         DEBUGG
             Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-            //token = Ade(fd_server);
-            printf("%s\n",token);
+            messret = Ade(fd_server);
+            printf("%s\n",messret->msg);
+            fflush(0);
+            free(messret);
             continue;
         }
         if (strcmp(token, "p") == 0) {

@@ -17,28 +17,74 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/Asdrubale.h"
 
+//
+typedef struct {
+    int fd_client;
+    pthread_t thread_id;
+    Lista_Giocatori_Concorrente* lista;
+} ThreadArgs;
+
 
 
 //Definizione funzioni
 void* asdrubale (void* arg) {
-    //Fd del client
-    int fd_client = *(int*) arg;
+    //Recupero i dati del thread
+    ThreadArgs* thread_args = (ThreadArgs*) arg;
+    int fd_client = thread_args->fd_client;
+    pthread_t thread_id = thread_args->thread_id;
+    Lista_Giocatori_Concorrente* lista = thread_args->lista;
+    //Inizializzo variabili
     Giocatore giocatore;
-    printf("Connesso client su fd: %d\n", fd_client);
-
     Msg* msg;
 
+    printf("Connesso client su fd: %d\n", fd_client);
+
     while (1) {
+        //Memorizzo il messaggio inviato dal client
         msg = Ade(fd_client);
-        
+        //Memorizzo il tipo di messaggio inviato dal client
         char type = (char)*msg->type;
-        printf("%c\n", type);
+
+        //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
-                printf("Messaggio registrazione ricevuto\n");
+                if (strlen(msg->msg) > 11) 
+                    Caronte(fd_client, "Errore nome utente troppo lungo", MSG_ERR);
+                for (int i = 0; i < strlen(msg->msg); i++) {
+                    printf("%c", msg->msg[i]);
+                    fflush(0);
+                    if(!(isdigit(msg->msg[i]) == 0 || isalpha(msg->msg[i] == 0))) {
+                        Caronte(fd_client, "Errore carattere speciale immesso", MSG_ERR);
+                        break;
+                    }
+                }
+                if (CercaUtente(lista, msg->msg) == 0) {
+                    Caronte(fd_client, "Errore nome utente già preso", MSG_ERR);
+                    break;
+                }
+
+                Aggiungi_Giocatore(lista, msg->msg, fd_client);
+                Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
+                //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
+                fflush(0);
                 break;
             case MSG_FINE:
+                printf("fine programma");
+                break;
+            case MSG_MATRICE:
+                printf("Matrice");
+                break;
+            case MSG_CANCELLA_UTENTE:
+                printf("Cancello utente");
+                break;
+            case MSG_LOGIN_UTENTE:
+                printf("login utente");
+                break;
+            case MSG_POST_BACHECA:
                 
+                break;
+            case MSG_SHOW_BACHECA:
+
                 break;
             //Aggiungere altri casi
             default:
@@ -140,6 +186,7 @@ void* Argo(void* arg) {
 }
 
 
+
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
 
@@ -147,8 +194,12 @@ int main (int argc, char* argv[]) {
 
 
     //Creo la lista vuota di Giocatori
+    printf("Provo a creare la lista...");
     //Creo la lista di giocatori
-    //Lista_Giocatori list = NULL;
+    Lista_Giocatori_Concorrente* lista;
+    lista = malloc(sizeof(Lista_Giocatori_Concorrente));
+    Inizializza_Lista(lista);
+
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;
@@ -181,9 +232,15 @@ int main (int argc, char* argv[]) {
     while(1) {
         int fdtemp;
         pthread_t tidtemp;
+        //Alloco spazio per i parametri del thread
+        ThreadArgs* thread_args = malloc(sizeof(ThreadArgs));
+                
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
-
-        SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, &fdtemp), "Errore pthread create collegato client");
+        //Inizializza ThreadArgs
+        thread_args->fd_client = fdtemp;
+        thread_args->thread_id = tidtemp;
+        thread_args->lista = lista;
+        SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, thread_args), "Errore pthread create collegato client");
     }
 
     return 0;

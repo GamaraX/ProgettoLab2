@@ -84,11 +84,17 @@ otherclean:
 run:
 	@./$(SERVER) 127.0.0.1 2000
 
+run1:
+	@./$(SERVER) 127.0.0.1 2004
+
 run2:
 	@./$(SERVER) 127.0.0.1 2001
 
 client:
 	@./$(CLIENT) 127.0.0.1 2000
+
+client1:
+	@./$(CLIENT) 127.0.0.1 2004
 
 client2:
 	@./$(CLIENT) 127.0.0.1 2001

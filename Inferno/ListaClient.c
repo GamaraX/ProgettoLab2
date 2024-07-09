@@ -1,4 +1,4 @@
-//Definizione Librerie
+// Definizione Librerie
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -16,72 +16,98 @@
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
 
-//Definisco funzione che aggiunge giocatori
-void Aggiungi_Giocatore(Lista_Giocatori* lista, char* nome, int fd) {
-    //Creo un Giocatore nella lista dei Giocatori
+// Inizializzo la lista concorrente
+void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc) {
+    lista_conc->lista = NULL;
+    pthread_mutex_init(&lista_conc->lock, NULL);
+}
+
+// Elimino la lista concorrente
+void Elimina_Lista(Lista_Giocatori_Concorrente* lista_conc) {
+    pthread_mutex_destroy(&lista_conc->lock);
+}
+
+// Definisco funzione che aggiunge giocatori
+void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int fd) {
+    pthread_mutex_lock(&lista_conc->lock);
+    // Creo un Giocatore nella lista dei Giocatori
     Giocatore* i = (Giocatore*) malloc(sizeof(Giocatore));
-    //Associo il thread
+    // Associo il thread
     i->thread = pthread_self();
-    //Associo il nome
-    i->nome = (char*) malloc (strlen(nome)+1);
-    strcpy(i->nome,nome);
-    //Assegno i punti (che sono 0 all'inizio della partita)
+    // Associo il nome
+    i->nome = (char*) malloc(strlen(nome) + 1);
+    strcpy(i->nome, nome);
+    // Assegno i punti (che sono 0 all'inizio della partita)
     i->punti = 0;
-    //Associo il fd
+    // Associo il fd
     i->fd_client = fd;
-    //Faccio puntare alla testa della lista
-    i->next = *lista;
-    *lista = i;
+    // Faccio puntare alla testa della lista
+    i->next = lista_conc->lista;
+    lista_conc->lista = i;
+    pthread_mutex_unlock(&lista_conc->lock);
     return;
 }
 
-int Rimuovi_Giocatore(Lista_Giocatori* lista, pthread_t tid) {
-    //Caso base
-    if (lista == NULL)
+int Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) {
+    pthread_mutex_lock(&lista_conc->lock);
+    Lista_Giocatori* lista = &lista_conc->lista;
+    // Caso base
+    if (*lista == NULL) {
+        pthread_mutex_unlock(&lista_conc->lock);
         return 1;
-    //Controllo se il tid coincide
+    }
+    // Controllo se il tid coincide
     if ((*lista)->thread == tid) {
         printf("Giocatore eliminato\n");
         Giocatore* temp = *lista;
         *lista = (*lista)->next;
+        free(temp->nome);
         free(temp);
+        pthread_mutex_unlock(&lista_conc->lock);
         return 0;
     }
-    //Cerco il prossimo tid nella lista
-    if ((*lista)->next->thread == tid) {
-        free((*lista)->next->nome);
-        Lista_Giocatori temp = (*lista)->next->next;
-        free((*lista)->next);
-        (*lista)->next = temp;
-        free(temp);
-        return 0;
+    // Cerco il prossimo tid nella lista
+    Lista_Giocatori prev = *lista;
+    Lista_Giocatori curr = (*lista)->next;
+    while (curr != NULL) {
+        if (curr->thread == tid) {
+            prev->next = curr->next;
+            free(curr->nome);
+            free(curr);
+            pthread_mutex_unlock(&lista_conc->lock);
+            return 0;
+        }
+        prev = curr;
+        curr = curr->next;
     }
-    return Rimuovi_Giocatore(&(*lista)->next, tid);
+    pthread_mutex_unlock(&lista_conc->lock);
+    return 1;
 }
 
-//Definisco una funzione che conta il numero di giocatori
-int Numero_Giocatori(Lista_Giocatori lista) {
-    //Primo caso base
-    if (lista == 0)
-        return 0;
-    //Secondo caso base
-    if (lista == NULL)
-        return 0;
-    //Caso ricorsivo
-    return 1 + Numero_Giocatori(lista->next);
+// Definisco una funzione che conta il numero di giocatori
+int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc) {
+    pthread_mutex_lock(&lista_conc->lock);
+    Lista_Giocatori lista = lista_conc->lista;
+    int count = 0;
+    while (lista != NULL) {
+        count++;
+        lista = lista->next;
+    }
+    pthread_mutex_unlock(&lista_conc->lock);
+    return count;
 }
 
-//Definisco una funzione per cercare Giocatori nella lista
-int CercaUtente (Lista_Giocatori lista, char* utente) {
-    //Caso in cui la lista sia vuota
-    if (lista == NULL) 
-        return 1;
-    //Cerco nome utente
-    printf("nome lista:%s\n",lista->nome);
-    printf("utente cercato:%s\n", utente);
-    if (strcmp(utente, lista->nome) == 0) {
-        return 0;
+// Definisco una funzione per cercare Giocatori nella lista
+int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
+    pthread_mutex_lock(&lista_conc->lock);
+    Lista_Giocatori lista = lista_conc->lista;
+    while (lista != NULL) {
+        if (strcmp(lista->nome, utente) == 0) {
+            pthread_mutex_unlock(&lista_conc->lock);
+            return 0;
+        }
+        lista = lista->next;
     }
-    //Cerca il prossimo nome utente nella lista
-    return CercaUtente(lista->next, utente);
+    pthread_mutex_unlock(&lista_conc->lock);
+    return 1;
 }
