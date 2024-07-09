@@ -15,6 +15,7 @@
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
+#include "../Purgatorio/LogFun.h"
 
 // Inizializzo la lista concorrente
 void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc) {

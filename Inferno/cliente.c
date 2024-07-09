@@ -15,6 +15,7 @@
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
+#include "../Purgatorio/LogFun.h"
 
 int main(int argc, char* argv[]) {
     //                   int retvalue;
@@ -65,6 +66,7 @@ int main(int argc, char* argv[]) {
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
+        //Inizio fase in cui il client non è ancora loggato
         int logged_in = 0;
         
         while(!logged_in){
@@ -73,6 +75,7 @@ int main(int argc, char* argv[]) {
             //se logghi=>
             logged_in=1;
         }
+        //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
         int in_game = 1;
         while(in_game){
             //finchè in game...

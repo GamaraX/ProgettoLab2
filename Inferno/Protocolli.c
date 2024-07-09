@@ -15,6 +15,7 @@
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
+#include "../Purgatorio/LogFun.h"
 
 //Definizione funzione che invia messaggi
 int Caronte(int fd, char* msg, char carattere) {

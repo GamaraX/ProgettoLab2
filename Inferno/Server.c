@@ -16,17 +16,75 @@
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/Asdrubale.h"
+//#include "../Purgatorio/LogFun.h"
 
-//
-typedef struct {
-    int fd_client;
-    pthread_t thread_id;
-    Lista_Giocatori_Concorrente* lista;
-} ThreadArgs;
+//Temporaneo
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+//Inizializzo variabili globali
+pthread_mutex_t log_mutex;
+char* filelog;
 
+//Funzione che inizializza i log
+void InizializzaMutexLog() {
+    pthread_mutex_init(&log_mutex, NULL);
+}
+
+//Funzione che cerca nel file di log
+char* CercaLog(char* azione) {
+    pthread_mutex_lock(&log_mutex);
+    char* ris_azione = NULL;
+    char* linea_file = NULL;
+    char* token_azione;
+    size_t len = 0;
+    ssize_t cmplettura;
+    //Apro il file in sola lettura
+    FILE* tempfd = fopen("../Paradiso/Log.txt", "r");
+    //Controllo se il file esiste o ci sono errori/corruzioni
+    if (tempfd == NULL) {
+        perror("Error opening file");
+        pthread_mutex_unlock(&log_mutex);
+        return NULL;
+    }
+    //Fino a che non arrivo alla fine del file, leggo il secondo parametro (che è l'azione eseguita dal client) e controllo se è l'azione che sto cercando
+    while ((cmplettura = getline(&linea_file, &len, tempfd)) != -1) {
+        token_azione = strtok(linea_file, ";");
+        token_azione = strtok(NULL, ";");
+        if (token_azione != NULL && strcmp(token_azione, azione) == 0) {
+            ris_azione = strdup(azione); 
+            break;
+        }
+    }
+    free(linea_file);
+    fclose(tempfd);
+    pthread_mutex_unlock(&log_mutex);
+    return ris_azione;
+}
+
+//Funzione che scrive nel file di log
+void ScriviLog(char* utente, char* azione, char* testo) {
+    //printf("%s %s %s\n", utente, azione, testo);              Debugging
+    pthread_mutex_lock(&log_mutex);
+    //Apro il file in append
+    FILE* tempfd = fopen("../Paradiso/Log.txt", "a");
+    //Controllo se il file esiste o ci sono errori/corruzioni
+    if (tempfd == NULL) {
+        perror("Error opening file");
+        pthread_mutex_unlock(&log_mutex);
+        return;
+    }
+    //Scrivo nel log la terna in formato nome utente;azione eseguita;testo (viene memorizzata la parola, altrimenti è un white space)
+    fprintf(tempfd, "%s;%s;%s\n", utente, azione, testo);
+    //Chiudo il file
+    fclose(tempfd);
+    pthread_mutex_unlock(&log_mutex);
+}
 
 //Definizione funzioni
+
 void* asdrubale (void* arg) {
     //Recupero i dati del thread
     ThreadArgs* thread_args = (ThreadArgs*) arg;
@@ -36,7 +94,7 @@ void* asdrubale (void* arg) {
     //Inizializzo variabili
     Giocatore giocatore;
     Msg* msg;
-
+    //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
 
     while (1) {
@@ -48,28 +106,41 @@ void* asdrubale (void* arg) {
         //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
+                //Controllo se il nome è minore o uguale a 10 caratteri
                 if (strlen(msg->msg) > 11) 
                     Caronte(fd_client, "Errore nome utente troppo lungo", MSG_ERR);
+                //Variabile per controllare se supera il prossimo controllo di soli caratteri alfanumerici
+                int valido = 1;
+                //Controllo se il messaggio contiene solo caratteri alfanumerici
                 for (int i = 0; i < strlen(msg->msg); i++) {
                     printf("%c", msg->msg[i]);
                     fflush(0);
-                    if(!(isdigit(msg->msg[i]) == 0 || isalpha(msg->msg[i] == 0))) {
+                    if(isdigit(msg->msg[i]) == 0 && isalpha(msg->msg[i]) == 0) {
                         Caronte(fd_client, "Errore carattere speciale immesso", MSG_ERR);
+                        valido = 0;
                         break;
                     }
                 }
+                //Controllo se è stato inviato un nome utente valido
+                if (!valido)
+                    break;
+                //Controllo se il nome utente è già stato preso
                 if (CercaUtente(lista, msg->msg) == 0) {
                     Caronte(fd_client, "Errore nome utente già preso", MSG_ERR);
                     break;
                 }
-
+                //Dopo aver fatto tutti i controlli, aggiungo il client alla lista e invio il messaggio di OK
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
+                ScriviLog(msg->msg, "Registrato", " ");
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
                 //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
+                //Sistemo il buffer
                 fflush(0);
                 break;
             case MSG_FINE:
-                printf("fine programma");
+                //printf("Client disconnesso\n");           Debugging
+                pthread_exit(NULL);
+                fflush(0);
                 break;
             case MSG_MATRICE:
                 printf("Matrice");
@@ -98,87 +169,9 @@ void* asdrubale (void* arg) {
         free(msg->type);
     }
 
-
-    /*while(1){
-        int logged_in = 0;
-        while(!logged_in){
-
-
-            logged_in = 1;//sei riuscito a loggarti
-        }
-        int in_game = 1;
-        //passi a gioco (sei loggato)        
-        while(in_game) {
-            
-
-        }
-    }*/
 }
 
-/*
-void* asdrubale (void* arg) {
-    //
-    int fd_client = *(int*) arg;
-    char type;
-    printf("client:%d, connesso\n",fd_client);
-    //Ricevo i messaggi dal client e li memorizzo in 'input'
-    char* input = Ade(fd_client, &type);
-    int prova = CercaUtente(list, input);
-    printf("risultato prova1:%d\n", prova);
-    //Controllo se il tipo del primo messaggio dal client è un comando di fine o una registrazione, in questo caso controllo se
-    //il nome utente inviato come input è uguale a quello di un altro utente o meno. Entro nel while in uno di questi casi
-    while ((type != MSG_REGISTRA_UTENTE && type != MSG_FINE) || prova == 0) {
-        //Controllo subito se il nome utente è uguale a quello di un altro client oppure no
-        if (prova == 0) 
-            Caronte(fd_client, "Scrivi un altro nome utente: quello inviato è già stato preso\n", MSG_ERR);
-        else{
-            //Il primo comando inviato non è la registrazione dell'utente: invio il messaggio al client e gli permetto di riprovare a registrarsi
-            Caronte(fd_client, "Errore: devi prima registrarti\n", MSG_ERR);
-        }
-        //Libero lo spazio di memoria collegato ad 'input'
-        free(input);
-        //Memorizzo in 'input' il nuovo messaggio inviato dal client
-        input = Ade(fd_client, &type);
-        prova = CercaUtente(list, input);
-        printf("%s\n", input);
-        printf("risultato prova2:%d\n",prova );
-    }
-    //È stato inviato il comando fine: termino il thread del client
-    if (type == MSG_FINE) {
-        pthread_exit(NULL);
-    }
-    //Aggiungo il giocatore alla lista
-    //printf("%s\n",input);
-    Aggiungi_Giocatore(&list, input, fd_client);
-    printf("lista giocatori:%d\n",Numero_Giocatori(list));
-    printf("fd:%d\n",list->fd_client);
-    printf("nome:%s\n",list->nome);
-    printf("punti:%d\n",list->punti);
-    printf("thread:%lu\n",list->thread);
-    Caronte(fd_client, "Nome utente valido", MSG_OK);
-    free(input);
-    //Controllo se il tipo del messaggio è fine o Cancella utente: fino a che non è nessuno dei due, il client gioca e può inviare 
-    //tutti i comandi a sua disposizione
-    while(type != MSG_FINE && type != MSG_CANCELLA_UTENTE) {
-        input = Ade(fd_client, &type);
-        //QUI DENTRO IL CLIENT GIOCA
 
-
-
-
-
-    }
-    //Se il tipo del messaggio è CANCELLA_UTENTE allora elimino l'utente dalla lista e chiudo il thread
-    if (type == MSG_CANCELLA_UTENTE) {
-        Rimuovi_Giocatore(&list, pthread_self());
-        pthread_exit(NULL);
-    }
-    Rimuovi_Giocatore(&list, pthread_self());
-    printf("Chiusura client\n");
-    printf("lista giocatori:%d\n",Numero_Giocatori(list));
-    return NULL;
-}
-*/
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
@@ -194,11 +187,12 @@ int main (int argc, char* argv[]) {
 
 
     //Creo la lista vuota di Giocatori
-    printf("Provo a creare la lista...");
+    printf("Provo a creare la lista...\n");
     //Creo la lista di giocatori
     Lista_Giocatori_Concorrente* lista;
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));
     Inizializza_Lista(lista);
+    InizializzaMutexLog();
 
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
