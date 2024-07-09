@@ -12,6 +12,7 @@ typedef struct gio {
     char* nome;
     int punti;
     int fd_client;
+    int loggato;
     struct gio* next;
 }Giocatore;
 
@@ -38,3 +39,5 @@ int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
 void Elimina_Lista(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione che inizializza la lista a vuota
 void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc);
+//Funzione che recupera il nome utente
+Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);

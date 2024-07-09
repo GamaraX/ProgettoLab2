@@ -42,6 +42,7 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
     i->punti = 0;
     // Associo il fd
     i->fd_client = fd;
+    i->loggato = 0;
     // Faccio puntare alla testa della lista
     i->next = lista_conc->lista;
     lista_conc->lista = i;
@@ -111,4 +112,18 @@ int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
     }
     pthread_mutex_unlock(&lista_conc->lock);
     return 1;
+}
+
+Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
+    pthread_mutex_lock(&lista_conc->lock);
+    Lista_Giocatori lista = lista_conc->lista;
+    while (lista != NULL) {
+        if (strcmp(lista->nome, utente) == 0) {
+            pthread_mutex_unlock(&lista_conc->lock);
+            return lista;
+        }
+        lista = lista->next;
+    }
+    pthread_mutex_unlock(&lista_conc->lock);
+    return NULL;
 }

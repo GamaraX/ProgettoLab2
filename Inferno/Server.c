@@ -92,7 +92,7 @@ void* asdrubale (void* arg) {
     pthread_t thread_id = thread_args->thread_id;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     //Inizializzo variabili
-    Giocatore giocatore;
+    Giocatore* giocatore;
     Msg* msg;
     //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
@@ -132,6 +132,8 @@ void* asdrubale (void* arg) {
                 //Dopo aver fatto tutti i controlli, aggiungo il client alla lista e invio il messaggio di OK
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
                 ScriviLog(msg->msg, "Registrato", " ");
+                giocatore = RecuperaUtente(lista,msg->msg);
+                giocatore->loggato = 1;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
                 //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
                 //Sistemo il buffer
@@ -139,6 +141,9 @@ void* asdrubale (void* arg) {
                 break;
             case MSG_FINE:
                 //printf("Client disconnesso\n");           Debugging
+                if (giocatore != NULL) {
+                    giocatore->loggato = 0;
+                }
                 pthread_exit(NULL);
                 fflush(0);
                 break;
@@ -149,7 +154,24 @@ void* asdrubale (void* arg) {
                 printf("Cancello utente");
                 break;
             case MSG_LOGIN_UTENTE:
+                Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
+                printf(msg->msg);
+                fflush(0);
+                printf("Ricerca terminata");
+                fflush(0);
+                if (listatemp == NULL) {
+                    Caronte(fd_client, "Errore, il giocatore non si è mai registrato. Fare una nuova registrazione utente", MSG_ERR);
+                    break;
+                }
+                if (listatemp->loggato) {
+                    Caronte(fd_client, "Errore, un giocatore è già loggato con questo nome utente. Fare una nuova registrazione utente", MSG_ERR);
+                    break;
+                }
+                giocatore = listatemp;
+                giocatore->loggato = 1;
+                Caronte(fd_client, "Utente loggato con successo!", MSG_OK);
                 printf("login utente");
+                fflush(0);
                 break;
             case MSG_POST_BACHECA:
                 
@@ -193,7 +215,7 @@ int main (int argc, char* argv[]) {
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));
     Inizializza_Lista(lista);
     InizializzaMutexLog();
-
+    
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;

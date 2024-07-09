@@ -145,8 +145,12 @@ int main(int argc, char* argv[]) {
             continue;
         }
         if(strcmp(token, "login_utente") == 0) {
-            strtok(NULL, "\n");
-            printf("fai qualcosa");
+            token = strtok(NULL, "\n");
+            Caronte(fd_server, token,MSG_LOGIN_UTENTE);
+            messret = Ade(fd_server);
+            printf("%s\n",messret->msg);
+            fflush(0);
+            free(messret);
             continue;
         }
 
