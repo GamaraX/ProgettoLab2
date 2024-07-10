@@ -22,7 +22,7 @@ Lettera** matrice;
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
-
+    int offset = 0;
     return NULL;
 }
 
