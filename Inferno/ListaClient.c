@@ -116,6 +116,7 @@ int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
 
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
     pthread_mutex_lock(&lista_conc->lock);
+    Lista_Giocatori head = lista_conc->lista;
     Lista_Giocatori lista = lista_conc->lista;
     while (lista != NULL) {
         if (strcmp(lista->nome, utente) == 0) {
@@ -124,6 +125,7 @@ Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* ut
         }
         lista = lista->next;
     }
+    lista_conc->lista = head;
     pthread_mutex_unlock(&lista_conc->lock);
     return NULL;
 }

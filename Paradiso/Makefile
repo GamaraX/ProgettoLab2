@@ -13,7 +13,7 @@ HDRS1 = $(HEADER)macro.h
 HDRS2 = $(HEADER)Protocolli.h
 HDRS3 = $(HEADER)ListaClient.h
 HDRS4 = $(HEADER)Matrice.h
-HDSR5 = $(HEADER)Asdrubale.h
+HDRS6 = $(HEADER)LogFun.h
 
 # Eseguibili
 SERVER = Server
@@ -21,7 +21,7 @@ CLIENT = cliente
 PROTO = Protocolli
 LISTA = ListaClient
 MATRICE = Matrice
-ASDRU = Asdrubale
+LOGFUN = LogFun
 
 # File oggetto
 OBJS = $(SERVER).o
@@ -29,7 +29,7 @@ OBJC = $(CLIENT).o
 OBJP = $(PROTO).o
 OBJL = $(LISTA).o
 OBJM = $(MATRICE).o
-OBJA = $(ASDRU).o
+OBJF = $(LOGFUN).o
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
@@ -37,49 +37,52 @@ SRCC = $(SORGENTE)$(CLIENT).c
 SRCP = $(SORGENTE)$(PROTO).c
 SRCL = $(SORGENTE)$(LISTA).c
 SRCM = $(SORGENTE)$(MATRICE).c
-SRCA = $(SORGENTE)$(ASDRU).c
+SRCF = $(SORGENTE)$(LOGFUN).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
 
 # Dipendenza file eseguibile
-$(SERVER): $(OBJS) 
+$(SERVER): $(OBJS)
 	@echo Server
-	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) -o $(SERVER)
+	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) -o $(SERVER)
 
-$(CLIENT): $(OBJC) 
+$(CLIENT): $(OBJC)
 	@echo Client
-	@$(CC) $(CFLAGS) $(OBJC) $(OBJP) $(OBJL) -o $(CLIENT)
+	@$(CC) $(CFLAGS) $(OBJC) $(OBJP) $(OBJL) $(OBJM) -o $(CLIENT)
+
+#forse OBJM non serve
 
 # Dipendenza file oggetto
 
 # Server.o
-$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3)
-	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(HDRS1) $(HDRS2) $(HDRS3)
-
-$(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3)
-	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCL) $(SRCP) $(HDRS1) $(HDRS2) $(HDRS3)
-
+$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS6)
+	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(SRCF) $(SRCM) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS6)
+#Client.o
+$(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
+	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCL) $(SRCP) $(SRCM) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
+#Protocolli.o
 $(OBJP): $(SRCP) $(HDRS1) $(HDRS2)
 	@$(CC) $(CFLAGS) -c $(SRCP) $(HDRS1) $(HDRS2)
-
+#ListaClient.o
 $(OBJL): $(SRCL) $(HDRS1) $(HDRS3)
 	@$(CC) $(CFLAGS) -c $(SRCL) $(HDRS1) $(HDRS3)
-
+#Matrice.o
 $(OBJM): $(SRCM) $(HDRS1) $(HDRS4)
 	@$(CC) $(CFLAGS) -c $(SRCM) $(HDRS1) $(HDRS4)
 
-$(OBJA): $(SRCA) $(HDRS1) $(HDSR5)
-	@$(CC) $(CFLAGS) -c $(SRCA) $(HDRS1) $(HDSR5)
+#LogFun.o
+$(OBJF): $(SRCF) $(HDRS1) $(HDRS6)
+	@$(CC) $(CFLAGS) -c $(SRCF) $(HDRS1) $(HDRS6)
 
 clean: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJA) $(SERVER) $(CLIENT)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJA)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF)
 
 otherclean:
-	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDSR5).gch
+	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDRS6).gch
 
 run:
 	@./$(SERVER) 127.0.0.1 2000

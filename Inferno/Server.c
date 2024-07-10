@@ -15,75 +15,14 @@
 #include "../Purgatorio/Protocolli.h"
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
-#include "../Purgatorio/Asdrubale.h"
-//#include "../Purgatorio/LogFun.h"
-
-//Temporaneo
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-//Inizializzo variabili globali
-pthread_mutex_t log_mutex;
-char* filelog;
-
-//Funzione che inizializza i log
-void InizializzaMutexLog() {
-    pthread_mutex_init(&log_mutex, NULL);
-}
-
-//Funzione che cerca nel file di log
-char* CercaLog(char* azione) {
-    pthread_mutex_lock(&log_mutex);
-    char* ris_azione = NULL;
-    char* linea_file = NULL;
-    char* token_azione;
-    size_t len = 0;
-    ssize_t cmplettura;
-    //Apro il file in sola lettura
-    FILE* tempfd = fopen("../Paradiso/Log.txt", "r");
-    //Controllo se il file esiste o ci sono errori/corruzioni
-    if (tempfd == NULL) {
-        perror("Error opening file");
-        pthread_mutex_unlock(&log_mutex);
-        return NULL;
-    }
-    //Fino a che non arrivo alla fine del file, leggo il secondo parametro (che è l'azione eseguita dal client) e controllo se è l'azione che sto cercando
-    while ((cmplettura = getline(&linea_file, &len, tempfd)) != -1) {
-        token_azione = strtok(linea_file, ";");
-        token_azione = strtok(NULL, ";");
-        if (token_azione != NULL && strcmp(token_azione, azione) == 0) {
-            ris_azione = strdup(azione); 
-            break;
-        }
-    }
-    free(linea_file);
-    fclose(tempfd);
-    pthread_mutex_unlock(&log_mutex);
-    return ris_azione;
-}
-
-//Funzione che scrive nel file di log
-void ScriviLog(char* utente, char* azione, char* testo) {
-    //printf("%s %s %s\n", utente, azione, testo);              Debugging
-    pthread_mutex_lock(&log_mutex);
-    //Apro il file in append
-    FILE* tempfd = fopen("../Paradiso/Log.txt", "a");
-    //Controllo se il file esiste o ci sono errori/corruzioni
-    if (tempfd == NULL) {
-        perror("Error opening file");
-        pthread_mutex_unlock(&log_mutex);
-        return;
-    }
-    //Scrivo nel log la terna in formato nome utente;azione eseguita;testo (viene memorizzata la parola, altrimenti è un white space)
-    fprintf(tempfd, "%s;%s;%s\n", utente, azione, testo);
-    //Chiudo il file
-    fclose(tempfd);
-    pthread_mutex_unlock(&log_mutex);
-}
+#include "../Purgatorio/LogFun.h"
 
 //Definizione funzioni
+
+//Definisco la funzione che gestisce le fasi della partita
+void* Argo(void* arg) {
+    return NULL;
+}
 
 void* asdrubale (void* arg) {
     //Recupero i dati del thread
@@ -113,7 +52,7 @@ void* asdrubale (void* arg) {
                 int valido = 1;
                 //Controllo se il messaggio contiene solo caratteri alfanumerici
                 for (int i = 0; i < strlen(msg->msg); i++) {
-                    printf("%c", msg->msg[i]);
+                    printf("%c\n", msg->msg[i]);
                     fflush(0);
                     if(isdigit(msg->msg[i]) == 0 && isalpha(msg->msg[i]) == 0) {
                         Caronte(fd_client, "Errore carattere speciale immesso", MSG_ERR);
@@ -131,7 +70,9 @@ void* asdrubale (void* arg) {
                 }
                 //Dopo aver fatto tutti i controlli, aggiungo il client alla lista e invio il messaggio di OK
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
+                //Lo aggiungo al file di Log
                 ScriviLog(msg->msg, "Registrato", " ");
+                //Adesso il giocatore è loggato
                 giocatore = RecuperaUtente(lista,msg->msg);
                 giocatore->loggato = 1;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
@@ -145,13 +86,20 @@ void* asdrubale (void* arg) {
                     giocatore->loggato = 0;
                 }
                 pthread_exit(NULL);
-                fflush(0);
                 break;
             case MSG_MATRICE:
                 printf("Matrice");
                 break;
             case MSG_CANCELLA_UTENTE:
+                if (CercaUtente(lista, msg->msg) != 0) {
+                    Caronte(fd_client, "Errore, non puoi cancellare un utente che non esiste", MSG_ERR);
+                    break;
+                }
+                Rimuovi_Giocatore(lista,pthread_self());
+                ScriviLog(msg->msg, "Cancellato", " ");
+                Caronte(fd_client, "Cancellazione utente effettuata correttamente", MSG_OK);
                 printf("Cancello utente");
+                fflush(0);
                 break;
             case MSG_LOGIN_UTENTE:
                 Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
@@ -193,20 +141,10 @@ void* asdrubale (void* arg) {
 
 }
 
-
-
-//Definisco la funzione che gestisce le fasi della partita
-void* Argo(void* arg) {
-    return NULL;
-}
-
-
-
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
 
     //Creo una Matrice 4x4
-
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");

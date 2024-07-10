@@ -88,16 +88,6 @@ int main(int argc, char* argv[]) {
         //leggo il messaggio di input che l'utente scrive (d)al client
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
         
-        //ciclo per controllare se tutti i caratteri sono lettere o numeri -> controllo per registra_utente
-        /*for (int i = 0; i < strlen(cmz)-1; i++) {
-            if(isdigit(cmz[i]) == 0 || isalpha(cmz[i] == 0)) {
-                printf("Carattere non accettato");
-                return 0;
-            }
-        }
-        */
-        //gestione errori su cosa viene passata come stringa (caratteri validi, se ci sono caratteri e non solo spazi,) (isdigit() e isalpha())
-        
         //Creo un variabile che memorizza il messaggio di ritorno dal server
         Msg* messret;
 
@@ -113,8 +103,9 @@ int main(int argc, char* argv[]) {
         if (strcmp(cmz, "fine\n") == 0) {
             Caronte(fd_server, "Chiusura client", MSG_FINE);
             close(fd_server);
-            exit(EXIT_SUCCESS);
             printf("Comando fine");
+            fflush(0);
+            exit(EXIT_SUCCESS);
             return 0;
         }
         if (strcmp(cmz, "cancella_registrazione\n") == 0) {

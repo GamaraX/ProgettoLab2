@@ -1,6 +1,4 @@
-pinna;Registrato; 
-pippo;Registrato; 
-pippo;Registrato; 
-pinna;Registrato; 
-pinna;Registrato; 
-pinna;Registrato; 
+pisa;Registrato; 
+pisa;Registrato; 
+pisa;Registrato; 
+pino;Registrato; 
