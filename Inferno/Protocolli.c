@@ -33,11 +33,11 @@ Msg* Ade(int fd) {
     Msg* msg = (Msg*)malloc(sizeof(Msg));
     char* carattere = malloc(sizeof(char));
     SYSC(retvalue, read(fd, &length, sizeof(int)), "Errore in read lunghezza messaggio");
+    msg->msg = (char*)malloc(length+1* sizeof(char));
     SYSC(retvalue, read(fd, carattere, sizeof(char)), "Errore in read tipo messaggio");
-    char* mess = (char*) malloc(length* sizeof(char));
-    SYSC(retvalue, read(fd, mess, length), "Errore in read messaggio");
-
-    msg->msg = mess;
+    SYSC(retvalue, read(fd, msg->msg, length), "Errore in read messaggio");
+    //
+    msg->msg[length] = '\0';
     msg->length = length;
     msg->type = carattere;
     return msg;

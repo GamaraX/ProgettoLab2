@@ -77,8 +77,6 @@ void* asdrubale (void* arg) {
                 giocatore->loggato = 1;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
                 //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
-                //Sistemo il buffer
-                fflush(0);
                 break;
             case MSG_FINE:
                 //printf("Client disconnesso\n");           Debugging
@@ -91,21 +89,23 @@ void* asdrubale (void* arg) {
                 printf("Matrice");
                 break;
             case MSG_CANCELLA_UTENTE:
-                if (CercaUtente(lista, msg->msg) != 0) {
-                    Caronte(fd_client, "Errore, non puoi cancellare un utente che non esiste", MSG_ERR);
+                char* tmpusername = Rimuovi_Giocatore(lista,pthread_self());
+                printf("%s\n",tmpusername);
+                fflush(0);
+                if (strcmp("", tmpusername) == 0) {
+                    Caronte(fd_client, "Errore, non ti sei registrato, quindi non puoi cancellarti", MSG_ERR);
                     break;
                 }
-                Rimuovi_Giocatore(lista,pthread_self());
-                ScriviLog(msg->msg, "Cancellato", " ");
-                Caronte(fd_client, "Cancellazione utente effettuata correttamente", MSG_OK);
-                printf("Cancello utente");
+                ScriviLog(tmpusername, "Cancellato", " ");
+                Caronte(fd_client, "Cancellazione utente effettuata correttamente\n", MSG_OK);
+                printf("Cancello utente\n");
                 fflush(0);
                 break;
             case MSG_LOGIN_UTENTE:
                 Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
-                printf(msg->msg);
+                printf("%s",msg->msg);
                 fflush(0);
-                printf("Ricerca terminata");
+                printf("Ricerca terminata\n");
                 fflush(0);
                 if (listatemp == NULL) {
                     Caronte(fd_client, "Errore, il giocatore non si è mai registrato. Fare una nuova registrazione utente", MSG_ERR);
@@ -118,7 +118,7 @@ void* asdrubale (void* arg) {
                 giocatore = listatemp;
                 giocatore->loggato = 1;
                 Caronte(fd_client, "Utente loggato con successo!", MSG_OK);
-                printf("login utente");
+                printf("login utente\n");
                 fflush(0);
                 break;
             case MSG_POST_BACHECA:
@@ -129,8 +129,9 @@ void* asdrubale (void* arg) {
                 break;
             //Aggiungere altri casi
             default:
-                printf("Comando non riconosciuto!");
+                printf("Comando non riconosciuto!\n");
                 //Invia messaggio comando sconosciuto?
+                fflush(0);
                 break;
         }
 
@@ -148,6 +149,7 @@ int main (int argc, char* argv[]) {
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
+    fflush(0);
     //Creo la lista di giocatori
     Lista_Giocatori_Concorrente* lista;
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));

@@ -50,23 +50,25 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
     return;
 }
 
-int Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) {
+char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) {
     pthread_mutex_lock(&lista_conc->lock);
+    char* tmpusername;
     Lista_Giocatori* lista = &lista_conc->lista;
     // Caso base
     if (*lista == NULL) {
         pthread_mutex_unlock(&lista_conc->lock);
-        return 1;
+        return "";
     }
     // Controllo se il tid coincide
     if ((*lista)->thread == tid) {
         printf("Giocatore eliminato\n");
         Giocatore* temp = *lista;
         *lista = (*lista)->next;
+        tmpusername = strdup(temp->nome);
         free(temp->nome);
         free(temp);
         pthread_mutex_unlock(&lista_conc->lock);
-        return 0;
+        return tmpusername;
     }
     // Cerco il prossimo tid nella lista
     Lista_Giocatori prev = *lista;
@@ -74,16 +76,17 @@ int Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) {
     while (curr != NULL) {
         if (curr->thread == tid) {
             prev->next = curr->next;
+            tmpusername = strdup(curr->nome);            
             free(curr->nome);
             free(curr);
             pthread_mutex_unlock(&lista_conc->lock);
-            return 0;
+            return tmpusername;
         }
         prev = curr;
         curr = curr->next;
     }
     pthread_mutex_unlock(&lista_conc->lock);
-    return 1;
+    return "";
 }
 
 // Definisco una funzione che conta il numero di giocatori

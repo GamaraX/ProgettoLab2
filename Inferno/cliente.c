@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
 
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
+            fflush(0);
             free(cmz);
             continue;
         }
@@ -109,7 +110,11 @@ int main(int argc, char* argv[]) {
             return 0;
         }
         if (strcmp(cmz, "cancella_registrazione\n") == 0) {
-            printf("fai qualcosa");
+            Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
+            messret = Ade(fd_server);
+            printf("%s", messret->msg);
+            fflush(0);
+            free(messret);
             continue;
         }
         if (strcmp(cmz, "show-msg\n") == 0) {
