@@ -28,7 +28,9 @@ Lettera** Crea_Matrix() {
 void Stampa_Matrix(Lettera** matrice) {
     for (int i = 0; i < 4; i++) {
             printf("%s | %s | %s | %s\n", matrice[i][0].lettera, matrice[i][1].lettera, matrice[i][2].lettera, matrice[i][3].lettera);
+            fflush(0);
     }
+    return;
 }
 
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
