@@ -30,7 +30,7 @@ char* CercaLog(char* azione) {
     FILE* tempfd = fopen("../Paradiso/Log.txt", "r");
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
-        perror("Error opening file");
+        perror("Errore apertura file");
         pthread_mutex_unlock(&log_mutex);
         return NULL;
     }
@@ -57,7 +57,7 @@ void ScriviLog(char* utente, char* azione, char* testo) {
     FILE* tempfd = fopen("../Paradiso/Log.txt", "a");
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
-        perror("Error opening file");
+        perror("Errore apertura file");
         pthread_mutex_unlock(&log_mutex);
         return;
     }

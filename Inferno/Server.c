@@ -17,10 +17,12 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 
-//Definizione funzioni
+//Inizializzo variabili globali
+Lettera** matrice;
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
+
     return NULL;
 }
 
@@ -145,7 +147,8 @@ void* asdrubale (void* arg) {
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
 
-    //Creo una Matrice 4x4
+    //Alloco una Matrice 4x4
+    matrice = Crea_Matrix();
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
