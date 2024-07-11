@@ -16,6 +16,7 @@
 #include "../Purgatorio/ListaClient.h"
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
+#include "../Purgatorio/Dizionario.h"
 
 //Inizializzo variabili globali
 Lettera** matrice;
@@ -88,6 +89,17 @@ void* asdrubale (void* arg) {
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
+                //Controllo se sono in fase di pausa o in game
+
+                //TEMPORANEO
+                char* file = "../Paradiso/matrici_disponibili.txt";
+                Carica_Matrix_File(file, matrice, 0);
+                // TEMPORANEO
+
+                //Se non sono in fase di pausa, invio la matrice
+                Caronte(fd_client, "Questa è la matrice", MSG_MATRICE);
+                Stampa_Matrix(matrice);
+                Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
                 printf("Matrice");
                 break;
             case MSG_CANCELLA_UTENTE:

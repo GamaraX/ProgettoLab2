@@ -114,7 +114,3 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     matrice[riga][colonna].visitato = 0;
     return trovato1 || trovato2 || trovato3 || trovato4;
 }
-/*
-int Controlla_Parola_Diz() {
-    
-}*/

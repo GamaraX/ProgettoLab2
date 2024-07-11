@@ -8,6 +8,9 @@ typedef struct lett{
 //Funzione che crea la matrice randomica
 Lettera** Crea_Matrix();
 
+//Funzione che stampa la matrice
+void Stampa_Matrix(Lettera** matrice);
+
 //Funzione che crea la matrice da un file
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset);
 

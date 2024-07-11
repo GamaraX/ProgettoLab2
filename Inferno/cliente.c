@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
                 logged_in=1;
                 fflush(0);
                 free(messret);
-                continue;
+                break;;
             }
             if(strcmp(token, "login_utente") == 0) {
                 token = strtok(NULL, "\n");
@@ -112,15 +112,50 @@ int main(int argc, char* argv[]) {
                 logged_in=1;
                 fflush(0);
                 free(messret);
-                continue;
+                break;;
             }
+            Caronte(fd_server, "Comando non disponibile", MSG_ERR);
         }
         //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
         int in_game = 1;
         while(in_game){
+            if(strcmp(cmz, "aiuto\n") == 0) {
+                printf(HELP_MESSAGE);
+               fflush(0);
+                free(cmz);
+                continue;
+            }
+            if (strcmp(cmz, "matrice\n") == 0) {
+                Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
+                messret = Ade(fd_server);
+                printf(messret->msg);
+                fflush(0);
+                free(messret);
+                messret = Ade(fd_server);
+                printf(messret->msg);
+                free(messret);
+                fflush(0);
+                continue;
+            }
+            if (strcmp(cmz, "fine\n") == 0) {
+                Caronte(fd_server, "Chiusura client", MSG_FINE);
+                close(fd_server);
+                printf("Comando fine\n");
+                fflush(0);
+                exit(EXIT_SUCCESS);
+                return 0;
+            }
             //finchè in game...
-           
-            in_game = 0;
+            if (strcmp(cmz, "cancella_registrazione\n") == 0) {
+                Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
+                messret = Ade(fd_server);
+                printf("%s", messret->msg);
+                fflush(0);
+                free(messret);
+                in_game = 0;
+                break;
+            }
+            //in_game = 0;
         }
         /*
         if(strcmp(cmz, "aiuto\n") == 0) {
