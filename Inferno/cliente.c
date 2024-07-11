@@ -68,12 +68,52 @@ int main(int argc, char* argv[]) {
         ssize_t nread;
         //Inizio fase in cui il client non è ancora loggato
         int logged_in = 0;
-        
+        //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
+        char* cmz = malloc(134*sizeof(char));
+        //leggo il messaggio di input che l'utente scrive (d)al client
+        SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
+        //Creo un variabile che memorizza il messaggio di ritorno dal server
+        Msg* messret;
+
+        //In questo momento devo ancora loggarmi e di conseguenza ho solo pochi comandi a disposizione
         while(!logged_in){
-            
-            //provi a loggarti
-            //se logghi=>
-            logged_in=1;
+            if(strcmp(cmz, "aiuto\n") == 0) {
+                printf(HELP_MESSAGE);
+                fflush(0);
+                free(cmz);
+                continue;
+            }
+            if (strcmp(cmz, "fine\n") == 0) {
+                Caronte(fd_server, "Chiusura client", MSG_FINE);
+                close(fd_server);
+                printf("Comando fine\n");
+                fflush(0);
+                exit(EXIT_SUCCESS);
+                return 0;
+            }
+            char* token;
+            token = strtok(cmz, " ");
+            if (strcmp(token, "registra_utente") == 0) {
+                token = strtok(NULL, "\n");
+                //printf("return 0\n");         DEBUGG
+                Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
+                messret = Ade(fd_server);
+                printf("%s\n",messret->msg);
+                logged_in=1;
+                fflush(0);
+                free(messret);
+                continue;
+            }
+            if(strcmp(token, "login_utente") == 0) {
+                token = strtok(NULL, "\n");
+                Caronte(fd_server, token,MSG_LOGIN_UTENTE);
+                messret = Ade(fd_server);
+                printf("%s\n",messret->msg);
+                logged_in=1;
+                fflush(0);
+                free(messret);
+                continue;
+            }
         }
         //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
         int in_game = 1;
@@ -82,15 +122,7 @@ int main(int argc, char* argv[]) {
            
             in_game = 0;
         }
-        
-        //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
-        char* cmz = malloc(134*sizeof(char));
-        //leggo il messaggio di input che l'utente scrive (d)al client
-        SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
-        
-        //Creo un variabile che memorizza il messaggio di ritorno dal server
-        Msg* messret;
-
+        /*
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
             fflush(0);
@@ -149,6 +181,7 @@ int main(int argc, char* argv[]) {
             free(messret);
             continue;
         }
+        */
 
     }
 

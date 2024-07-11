@@ -1,0 +1,3 @@
+pisa;Registrato; 
+piso;Registrato; 
+pisa;Registrato; 

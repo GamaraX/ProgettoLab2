@@ -40,10 +40,10 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
         perror("Errore apertura file");
-        return NULL;
+        return;
     }
     //Inizio a leggere dalla prima riga ogni lettera fino alla fine della riga
-    fseek(tempfd, offset, SEEK_SET);
+    fseek(tempfd, *offset, SEEK_SET);
     fscanf(tempfd,"%s", stringatmp);
     token = strtok(stringatmp," ");
     //Memorizzo nella matrice la lettera corrispondente dal file
@@ -114,7 +114,7 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     matrice[riga][colonna].visitato = 0;
     return trovato1 || trovato2 || trovato3 || trovato4;
 }
-
+/*
 int Controlla_Parola_Diz() {
     
-}
+}*/
