@@ -93,7 +93,10 @@ void* asdrubale (void* arg) {
 
                 //TEMPORANEO
                 char* file = "../Paradiso/matrici_disponibili.txt";
-                Carica_Matrix_File(file, matrice, 0);
+                int offset;
+                int* offsetp = &offset;
+                *offsetp = 0;
+                Carica_Matrix_File(file, matrice, offsetp);
                 // TEMPORANEO
 
                 //Se non sono in fase di pausa, invio la matrice
@@ -110,7 +113,7 @@ void* asdrubale (void* arg) {
                 printf("Matrice");
                 break;
             case MSG_CANCELLA_UTENTE:
-                char* tmpusername = Rimuovi_Giocatore(lista,pthread_self());
+                char* tmpusername = Rimuovi_Giocatore(lista,giocatore->nome);
                 printf("%s\n",tmpusername);
                 fflush(0);
                 if (strcmp("", tmpusername) == 0) {
@@ -168,7 +171,13 @@ int main (int argc, char* argv[]) {
 
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
-    
+    char* file = "../Paradiso/matrici_disponibili.txt";
+    Carica_Matrix_File(file, matrice, 0);
+    Stampa_Matrix(matrice);
+    int contr;
+    contr = Controlla_Parola_Matrice(matrice,"CASI");
+    printf("%d", contr);
+
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
     fflush(0);
