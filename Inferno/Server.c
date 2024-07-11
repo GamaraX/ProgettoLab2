@@ -124,7 +124,7 @@ void* asdrubale (void* arg) {
                 break;
             case MSG_LOGIN_UTENTE:
                 Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
-                printf("%s",msg->msg);
+                //printf("%s\n",msg->msg);      DEBUG
                 fflush(0);
                 printf("Ricerca terminata\n");
                 fflush(0);
