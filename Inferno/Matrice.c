@@ -15,10 +15,11 @@
 #include "../Purgatorio/Matrice.h"
 
 Lettera** Crea_Matrix() {
-    Lettera** mtx = (Lettera**) malloc(4*sizeof(Lettera*));
+    Lettera** mtx = (Lettera**) malloc(4 * sizeof(Lettera*));
     for (int i = 0; i < 4; i++) {
-        mtx[i] = (Lettera*) malloc(4*sizeof(Lettera));
-        for(int j = 0; j < 4; j++) {
+        mtx[i] = (Lettera*) malloc(4 * sizeof(Lettera));
+        for (int j = 0; j < 4; j++) {
+            mtx[i][j].lettera = (char*) malloc(3 * sizeof(char));
             mtx[i][j].visitato = 0;
         }
     }
@@ -27,8 +28,8 @@ Lettera** Crea_Matrix() {
 
 void Stampa_Matrix(Lettera** matrice) {
     for (int i = 0; i < 4; i++) {
-            printf("%s | %s | %s | %s\n", matrice[i][0].lettera, matrice[i][1].lettera, matrice[i][2].lettera, matrice[i][3].lettera);
-            fflush(0);
+        printf("%s | %s | %s | %s\n", matrice[i][0].lettera, matrice[i][1].lettera, matrice[i][2].lettera, matrice[i][3].lettera);
+        fflush(0);
     }
     return;
 }
@@ -46,7 +47,7 @@ void Carica_Matrix_Stringa(char* matrice, Lettera** newmatrice) {
 
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     char* token, stringatmp[48];
-    //Prendo e apro il file
+    //Prendo e apro il fileù
     FILE* tempfd = fopen(file,"r");
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
@@ -54,20 +55,27 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
         return;
     }
     //Inizio a leggere dalla prima riga ogni lettera fino alla fine della riga
-    fseek(tempfd, *offset, SEEK_SET);
-    fscanf(tempfd,"%s", stringatmp);
+    fseek(tempfd, 0, SEEK_SET);
+
+    fgets(stringatmp,sizeof(stringatmp), tempfd);
+    printf("%s\n", stringatmp);
+    fflush(0);
     token = strtok(stringatmp," ");
+    printf("%s\n", stringatmp);
+    fflush(0);
     //Memorizzo nella matrice la lettera corrispondente dal file
-    while(token != NULL) {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                matrice[i][j].lettera = token[0];
+                /*
+                printf("%s", token);
+                fflush(0);
+                */
+               strcpy(matrice[i][j].lettera, token);
                 token = strtok(NULL, " ");
             }
         }
-    }
     //Imposto l'offset alla prossima riga
-    *offset = fseek(tempfd, 0, SEEK_SET);
+    //*offset = ftell(tempfd);
     fclose(tempfd);
 }
 
@@ -95,33 +103,38 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     return 0;
 }
 
+
 int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int colonna) {
-    if(strlen(parola_utente) == pos)
+    if (strlen(parola_utente) == pos)
         return 1;
-////////Non controllo veramente se sto uscendo fuori dalla parola -> parola_utente = ""
-    char* lett;
-    //Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come Qu
-    if (strcmp("Q", parola_utente[pos]) == 0 ) {
-        pos += 1;
-        lett = "Qu";
-    }
-    else {
-        lett = parola_utente[pos];
-    }
-    //Controllo se sto uscendo fuori dalla matrice
-    if(riga<0 || riga >= 4 || colonna < 0 || colonna >= 4)
+
+    // Controllo se sto uscendo fuori dalla matrice
+    if (riga < 0 || riga >= 4 || colonna < 0 || colonna >= 4)
         return 0;
 
-    //Controllo se la lettera pos-esima della parola utente è presente nella matrice, oppure se l'elemento della matrice è già stato visitato o meno
-    if (strcmp(matrice[riga][colonna].lettera, lett) != 0 || matrice[riga][colonna].visitato) {
-       return 0;
+    char lett[2];
+
+    // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come Qu
+    if (parola_utente[pos] == 'Q') {
+        strcpy(lett, "Qu");
+    } else {
+        lett[0] = parola_utente[pos];
     }
+
+    // Controllo se la lettera pos-esima della parola utente è presente nella matrice, oppure se l'elemento della matrice è già stato visitato o meno
+    if (strcmp(matrice[riga][colonna].lettera, lett) != 0 || matrice[riga][colonna].visitato) {
+        return 0;
+    }
+
     matrice[riga][colonna].visitato = 1;
-    int trovato1, trovato2, trovato3, trovato4;
-    trovato1 = DFS_Matrix(matrice, parola_utente, pos+1, riga+1, colonna);
-    trovato2 = DFS_Matrix(matrice, parola_utente, pos+1, riga-1, colonna);
-    trovato3 = DFS_Matrix(matrice, parola_utente, pos+1, riga, colonna+1);
-    trovato4 = DFS_Matrix(matrice, parola_utente, pos+1, riga, colonna-1);
+
+    // Chiamate ricorsive per le 4 direzioni possibili
+    int trovato1 = DFS_Matrix(matrice, parola_utente, pos + 1, riga + 1, colonna);
+    int trovato2 = DFS_Matrix(matrice, parola_utente, pos + 1, riga - 1, colonna);
+    int trovato3 = DFS_Matrix(matrice, parola_utente, pos + 1, riga, colonna + 1);
+    int trovato4 = DFS_Matrix(matrice, parola_utente, pos + 1, riga, colonna - 1);
+
     matrice[riga][colonna].visitato = 0;
+
     return trovato1 || trovato2 || trovato3 || trovato4;
 }
