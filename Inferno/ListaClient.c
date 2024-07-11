@@ -50,7 +50,7 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
     return;
 }
 
-char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) {
+char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente) {
     pthread_mutex_lock(&lista_conc->lock);
     char* tmpusername;
     Lista_Giocatori* lista = &lista_conc->lista;
@@ -60,7 +60,7 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) 
         return "";
     }
     // Controllo se il tid coincide
-    if ((*lista)->thread == tid) {
+    if ((*lista)->nome == nome_utente) {
         printf("Giocatore eliminato\n");
         Giocatore* temp = *lista;
         *lista = (*lista)->next;
@@ -74,7 +74,7 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, pthread_t tid) 
     Lista_Giocatori prev = *lista;
     Lista_Giocatori curr = (*lista)->next;
     while (curr != NULL) {
-        if (curr->thread == tid) {
+        if (curr->nome == nome_utente) {
             prev->next = curr->next;
             tmpusername = strdup(curr->nome);            
             free(curr->nome);
