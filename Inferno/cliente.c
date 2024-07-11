@@ -144,6 +144,7 @@ int main(int argc, char* argv[]) {
 
         //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
         int in_game = 1;
+        //finchè in game...
         while(in_game){
             char* cmz = malloc(134*sizeof(char));  
             SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
@@ -177,6 +178,7 @@ int main(int argc, char* argv[]) {
                 free(cmz);
                 continue;
             }
+
             if (strcmp(cmz, "fine\n") == 0) {
                 Caronte(fd_server, "Chiusura client", MSG_FINE);
                 in_game = 0;
@@ -187,10 +189,17 @@ int main(int argc, char* argv[]) {
                 exit(EXIT_SUCCESS);
                 return 0;
             }
-            //finchè in game...
+            
             if (strcmp(cmz, "cancella_registrazione\n") == 0) {
                 Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
                 messret = Ade(fd_server);
+                if (strcmp("E", messret->type) == 0) {
+                    printf("%s\n",messret->msg);
+                    fflush(0);
+                    free(cmz);
+                    free(messret);
+                    continue;
+                }
                 printf("%s", messret->msg);
                 fflush(0);
                 free(messret);
