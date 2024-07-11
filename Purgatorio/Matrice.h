@@ -11,6 +11,9 @@ Lettera** Crea_Matrix();
 //Funzione che stampa la matrice
 void Stampa_Matrix(Lettera** matrice);
 
+//
+void Carica_Matrix_Stringa(char* matrice, Lettera** newmatrice);
+
 //Funzione che crea la matrice da un file
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset);
 
@@ -21,6 +24,3 @@ void Genera_Matrix(Lettera** matrice, int seed);
 int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente);
 
 int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int colonna);
-
-//Funzione che cerca la parola digitata dall'utente nel dizionario
-int Controlla_Parola_Diz();

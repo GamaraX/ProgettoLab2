@@ -33,6 +33,17 @@ void Stampa_Matrix(Lettera** matrice) {
     return;
 }
 
+void Carica_Matrix_Stringa(char* matrice, Lettera** newmatrice) {
+    char* token;
+    token = strtok(matrice, " ");
+    for(int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            newmatrice[i][j].lettera = token;
+            token = strtok(NULL, " ");
+        }
+    }
+}
+
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     char* token, stringatmp[48];
     //Prendo e apro il file

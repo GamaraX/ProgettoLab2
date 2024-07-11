@@ -17,6 +17,9 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 
+//Inizializzo variabile globale
+Lettera** matrice;
+
 int main(int argc, char* argv[]) {
     //                   int retvalue;
     //controllo se il numero di parametri passati è giusto
@@ -70,13 +73,15 @@ int main(int argc, char* argv[]) {
         int logged_in = 0;
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
-        //leggo il messaggio di input che l'utente scrive (d)al client
-        SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
+   
         //Creo un variabile che memorizza il messaggio di ritorno dal server
         Msg* messret;
 
         //In questo momento devo ancora loggarmi e di conseguenza ho solo pochi comandi a disposizione
         while(!logged_in){
+            //leggo il messaggio di input che l'utente scrive (d)al client
+            SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
+
             if(strcmp(cmz, "aiuto\n") == 0) {
                 printf(HELP_MESSAGE);
                 fflush(0);
@@ -88,12 +93,13 @@ int main(int argc, char* argv[]) {
                 close(fd_server);
                 printf("Comando fine\n");
                 fflush(0);
+                //free(cmz);
                 exit(EXIT_SUCCESS);
                 return 0;
             }
             char* token;
             token = strtok(cmz, " ");
-            if (strcmp(token, "registra_utente") == 0) {
+            if (strcmp(token, "registra_utente\n") == 0) {
                 token = strtok(NULL, "\n");
                 //printf("return 0\n");         DEBUGG
                 Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
@@ -101,47 +107,64 @@ int main(int argc, char* argv[]) {
                 printf("%s\n",messret->msg);
                 logged_in=1;
                 fflush(0);
+                free(cmz);
                 free(messret);
-                break;;
+                break;
             }
-            if(strcmp(token, "login_utente") == 0) {
+            if(strcmp(token, "login_utente\n") == 0) {
                 token = strtok(NULL, "\n");
                 Caronte(fd_server, token,MSG_LOGIN_UTENTE);
                 messret = Ade(fd_server);
                 printf("%s\n",messret->msg);
                 logged_in=1;
                 fflush(0);
+                free(cmz);
                 free(messret);
-                break;;
+                break;
             }
             Caronte(fd_server, "Comando non disponibile", MSG_ERR);
         }
+
         //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
         int in_game = 1;
         while(in_game){
+            SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
             if(strcmp(cmz, "aiuto\n") == 0) {
                 printf(HELP_MESSAGE);
-               fflush(0);
+                fflush(0);
                 free(cmz);
                 continue;
             }
             if (strcmp(cmz, "matrice\n") == 0) {
                 Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
                 messret = Ade(fd_server);
-                printf(messret->msg);
-                fflush(0);
+                //C'è una partita in corso e ricevo la matrice corrente
+                if (messret->type == MSG_MATRICE) {
+                    Carica_Matrix_Stringa(messret->msg, matrice);
+                    Stampa_Matrix(matrice);
+                }
+                //C'è la fase di pausa della durata di 1 minuto, aspetto che finisca
+                if (messret->type == MSG_TEMPO_ATTESA) {
+
+                }
+                
                 free(messret);
+                /*      TEMPORANEO POI DEVO RICEVERE ANCHE IL TEMPO
                 messret = Ade(fd_server);
                 printf(messret->msg);
                 free(messret);
                 fflush(0);
+                */
+                free(cmz);
                 continue;
             }
             if (strcmp(cmz, "fine\n") == 0) {
                 Caronte(fd_server, "Chiusura client", MSG_FINE);
+                in_game = 0;
                 close(fd_server);
                 printf("Comando fine\n");
                 fflush(0);
+                //free(cmz);
                 exit(EXIT_SUCCESS);
                 return 0;
             }
@@ -152,6 +175,7 @@ int main(int argc, char* argv[]) {
                 printf("%s", messret->msg);
                 fflush(0);
                 free(messret);
+                free(cmz);
                 in_game = 0;
                 break;
             }

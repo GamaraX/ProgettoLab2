@@ -97,9 +97,16 @@ void* asdrubale (void* arg) {
                 // TEMPORANEO
 
                 //Se non sono in fase di pausa, invio la matrice
-                Caronte(fd_client, "Questa è la matrice", MSG_MATRICE);
-                Stampa_Matrix(matrice);
-                Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
+                char* stringa_matrice;
+                for (int i = 0; i < 4; i++) {
+                    for(int j = 0; j < 4; j++) {
+                        strcat(stringa_matrice, matrice[i][j].lettera);
+                    }
+                }
+                Caronte(fd_client, stringa_matrice, MSG_MATRICE);
+                //TEMPORANEO POI DEVO INVIARE ANCHE IL TEMPO
+
+                //Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
                 printf("Matrice");
                 break;
             case MSG_CANCELLA_UTENTE:
@@ -161,7 +168,7 @@ int main (int argc, char* argv[]) {
 
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
-
+    
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
     fflush(0);
