@@ -109,9 +109,11 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     //Cerco nella matrice la lettera pos-esima della parola dell'utente
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            if(DFS_Matrix(matrice, parola_utente, 0, i, j) == 1)
-                return 1;
-        }
+            //if(matrice[i][j].lettera == parola_utente[0])
+                if(DFS_Matrix(matrice, parola_utente, 0, i, j) == 1)
+                    return 1;
+            }
+        
     }
     return 0;
 }

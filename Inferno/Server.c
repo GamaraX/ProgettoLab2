@@ -234,7 +234,7 @@ int main (int argc, char* argv[]) {
                     //fflush(0);
     Stampa_Matrix(matrice);
     int contr;
-    contr = Controlla_Parola_Matrice(matrice,"CASI");
+    contr = Controlla_Parola_Matrice(matrice,"CASE");
     printf("%d\n", contr);
 
     //Creo la lista vuota di Giocatori
