@@ -12,7 +12,7 @@ Lettera** Crea_Matrix();
 void Stampa_Matrix(Lettera** matrice);
 
 //
-void Carica_Matrix_Stringa(char* matrice, Lettera** newmatrice);
+void Carica_Matrix_Stringa(Lettera** matrice, char* stringa);
 
 //Funzione che crea la matrice da un file
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset);

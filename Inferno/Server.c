@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+
 //Definizione Librerie
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,8 +20,26 @@
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
 
+
+
+//#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
 Lettera** matrice;
+Lista_Giocatori_Concorrente* lista;
+int ingame = 0;
+
+
+//Definisco la funzione che gestise la SIGINT
+void GestoreSigint(int signum) {
+    Lista_Giocatori gioctemp = lista->lista;
+    while(gioctemp != NULL) {
+        if(gioctemp->loggato) {
+            Caronte(gioctemp->fd_client, "Il server si sta chiudendo", MSG_FINE);
+        }
+        gioctemp = gioctemp->next;
+    }
+    exit(EXIT_SUCCESS);
+}
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
@@ -28,6 +48,12 @@ void* Argo(void* arg) {
 }
 
 void* asdrubale (void* arg) {
+
+    //
+    int retvalue;
+    //#todo variabile per timestamp ultimo comando  
+    //#todo starta un thread e passa quel timestamp come puntatore, passa anche giocatore, e quando stacchi, ricordati di controllare se per caso si e` loggato, nel caso setta loggato=0
+    
     //Recupero i dati del thread
     ThreadArgs* thread_args = (ThreadArgs*) arg;
     int fd_client = thread_args->fd_client;
@@ -42,12 +68,18 @@ void* asdrubale (void* arg) {
     while (1) {
         //Memorizzo il messaggio inviato dal client
         msg = Ade(fd_client);
+
+
         //Memorizzo il tipo di messaggio inviato dal client
         char type = (char)*msg->type;
 
         //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
+                if(giocatore != NULL) {
+                    Caronte(fd_client, "Errore sei già loggato", MSG_ERR);
+                    break;
+                }
                 //Controllo se il nome è minore o uguale a 10 caratteri
                 if (strlen(msg->msg) > 11) 
                     Caronte(fd_client, "Errore nome utente troppo lungo", MSG_ERR);
@@ -89,6 +121,7 @@ void* asdrubale (void* arg) {
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
+                //#todolater fare in modo che non venga ricaricata da file ogni volta ma cambiata da qualche handler che gestisce sto game
                 //Controllo se sono in fase di pausa o in game
                 printf("%s\n", msg->msg);
                 fflush(0);
@@ -97,8 +130,8 @@ void* asdrubale (void* arg) {
                 //int offset;
                 //int* offsetp = &offset;
                 //*offsetp = 0;
-                printf("ciao");
-                fflush(0);
+                                    //printf("ciao\n");
+                                    //fflush(0);
                 Carica_Matrix_File(file, matrice, 0);
                 // TEMPORANEO
 
@@ -107,19 +140,21 @@ void* asdrubale (void* arg) {
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
                         strcat(stringa_matrice, matrice[i][j].lettera);
-                        printf("%s", stringa_matrice);
-                        fflush(0);
+                        strcat(stringa_matrice, " "); //trovare modo elegante per fare questa cosa in una sola riga, soluzione temporanea per testare features
                     }
                 }
                 Caronte(fd_client, stringa_matrice, MSG_MATRICE);
                 //TEMPORANEO POI DEVO INVIARE ANCHE IL TEMPO
 
                 //Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
-                printf("Matrice");
                 break;
             case MSG_PAROLA:
 
             case MSG_CANCELLA_UTENTE:
+                if(giocatore == NULL) {
+                    Caronte(fd_client, "Errore, non sei loggato", MSG_ERR);
+                    break;
+                }
                 char* tmpusername = Rimuovi_Giocatore(lista,giocatore->nome);
                 printf("%s\n",tmpusername);
                 fflush(0);
@@ -129,10 +164,15 @@ void* asdrubale (void* arg) {
                 }
                 ScriviLog(tmpusername, "Cancellato", " ");
                 Caronte(fd_client, "Cancellazione utente effettuata correttamente\n", MSG_OK);
+                giocatore = NULL;
                 printf("Cancello utente\n");
                 fflush(0);
                 break;
             case MSG_LOGIN_UTENTE:
+                if(giocatore != NULL) {
+                    Caronte(fd_client, "Errore già loggato", MSG_ERR);
+                    break;
+                }
                 Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
                 //printf("%s\n",msg->msg);      DEBUG
                 fflush(0);
@@ -166,7 +206,6 @@ void* asdrubale (void* arg) {
                 break;
         }
 
-        
         free(msg->msg);
         free(msg->type);
     }
@@ -175,6 +214,16 @@ void* asdrubale (void* arg) {
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
+
+    //Struct sigaction
+    struct sigaction sa;
+    sa.sa_handler = GestoreSigint;
+    sa.sa_flags = SA_RESTART;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_handler = GestoreSigint; //temporaneo
+
+    //Associo il GestoreSigint al segnale di SIGINT
+    sigaction(SIGINT, &sa, NULL);
 
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
@@ -192,7 +241,6 @@ int main (int argc, char* argv[]) {
     printf("Provo a creare la lista...\n");
     fflush(0);
     //Creo la lista di giocatori
-    Lista_Giocatori_Concorrente* lista;
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));
     Inizializza_Lista(lista);
     InizializzaMutexLog();

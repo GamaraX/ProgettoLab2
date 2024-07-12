@@ -34,17 +34,18 @@ void Stampa_Matrix(Lettera** matrice) {
     return;
 }
 
-void Carica_Matrix_Stringa(char* matrice, Lettera** newmatrice) {
+void Carica_Matrix_Stringa(Lettera** matrice, char* stringa) {
     char* token;
-    token = strtok(matrice, " ");
+    token = strtok(stringa, " ");
     for(int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            newmatrice[i][j].lettera = token;
+            strcpy(matrice[i][j].lettera, token);
             token = strtok(NULL, " ");
         }
     }
 }
-
+//#todo fix, usare funzione Carica_Matrix_Stringa e usa la stringa che leggi
+//#todo fixare offest
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     char* token, stringatmp[48];
     //Prendo e apro il fileù
@@ -84,6 +85,7 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     //*offset = ftell(tempfd);
     fclose(tempfd);
 }
+//#todo fixare genera matrix ma in realta' devi solo generare una stringa di 16 caratteri separati da spazio (controllare la Q come gia` fai) e poi chiamare Carica_Matrix_Stringa
 
 void Genera_Matrix(Lettera** matrice, int seed) {
     //Pongo il seed della funzione rand al valore seed passato come argomento
@@ -102,7 +104,7 @@ void Genera_Matrix(Lettera** matrice, int seed) {
     }
 }
 
-
+//#todo attenzione perche' c'e' un'ottimizzazione che puoi fare: far partire la ricerca solo se la prima lettera coincide (di sicuro non trovi la parole ALBERO partendo dalla lettera E)
 int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     //Cerco nella matrice la lettera pos-esima della parola dell'utente
     for (int i = 0; i < 4; i++) {
@@ -149,3 +151,6 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
 
     return trovato1 || trovato2 || trovato3 || trovato4;
 }
+
+
+//#todo dealloca la matrice, prende in ingresso Lettera** e fa la free di tutti i campi (ritorna void)

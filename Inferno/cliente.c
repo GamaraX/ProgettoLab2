@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+
 //Definizione Librerie
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,9 +21,56 @@
 
 //Inizializzo variabile globale
 Lettera** matrice;
+int fd_server;
+pthread_mutex_t messaggio_mutex;
+//Definisco la funzione che gestise la SIGINT
+void GestoreSigint(int signum) {
+    int retvalue;
+    Caronte(fd_server, "Chiusura Client tramite SIGINT", MSG_FINE);
+    SYSC(retvalue, close(fd_server), "Errore nella close Client");
+}
+
+
+void receiver(void* args) {
+    Msg* received_msg;
+
+    while(1) {
+        received_msg = Ade(fd_server);
+        char type = (char)*received_msg->type;
+        pthread_mutex_unlock(&messaggio_mutex);
+        switch(type){
+            case MSG_OK:
+                printf("%s\n", received_msg->msg);
+                fflush(0);
+                break;
+            case MSG_ERR:
+                printf("%s\n", received_msg->msg);
+                fflush(0);
+                break;
+            case MSG_FINE:
+
+                exit(EXIT_SUCCESS);
+            case MSG_MATRICE:
+                matrice = Crea_Matrix();
+                Carica_Matrix_Stringa(matrice, received_msg->msg);
+                Stampa_Matrix(matrice);
+                //fare free matrice
+                break;
+            default:
+                break;
+        }
+
+    }
+}
+
+
 
 int main(int argc, char* argv[]) {
     //                   int retvalue;
+    
+    //Mutex per la mutua esclusione dei messaggi
+    pthread_mutex_init(&messaggio_mutex, NULL);
+    
     //controllo se il numero di parametri passati è giusto
     if (argc != 3) {
         perror("Numero sbagliato di parametri passati!");
@@ -40,8 +89,18 @@ int main(int argc, char* argv[]) {
         exit(EXIT_SUCCESS);
     }
 
+    //Struct sigaction
+    struct sigaction sa;
+    sa.sa_handler = GestoreSigint;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    //Associo il GestoreSigint al segnale di SIGINT
+    sigaction(SIGINT, &sa, NULL);
+
+
+
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server 
-    int fd_server, porta_server = atoi(argv[2]);
+    int porta_server = atoi(argv[2]);
 
     //salvo il nome del server   ???
     char* nome_server = argv[1];
@@ -66,23 +125,26 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Facciamo partire il thread receiver
+    pthread_t receiver_thread;
+    pthread_create(&receiver_thread, NULL, receiver, NULL);
+
+
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
-        //Inizio fase in cui il client non è ancora loggato
-        int logged_in = 0;
-        
-   
+
         //Creo un variabile che memorizza il messaggio di ritorno dal server
         Msg* messret;
 
-        //In questo momento devo ancora loggarmi e di conseguenza ho solo pochi comandi a disposizione
-        while(!logged_in){
-            //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
-            char* cmz = malloc(134*sizeof(char));
-            //leggo il messaggio di input che l'utente scrive (d)al client
-            SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
-
+        pthread_mutex_lock(&messaggio_mutex);
+        //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
+        char* cmz = malloc(134*sizeof(char));
+        //leggo il messaggio di input che l'utente scrive (d)al client
+        //print prompt msg
+        printf("%s", "[PROMPT PAROLIERE]-->");
+        fflush(0);
+        SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
             if(strcmp(cmz, "aiuto\n") == 0) {
                 printf(HELP_MESSAGE);
                 fflush(0);
@@ -92,8 +154,6 @@ int main(int argc, char* argv[]) {
             if (strcmp(cmz, "fine\n") == 0) {
                 Caronte(fd_server, "Chiusura client", MSG_FINE);
                 close(fd_server);
-                printf("Comando fine\n");
-                fflush(0);
                 free(cmz);
                 exit(EXIT_SUCCESS);
                 return 0;
@@ -104,115 +164,33 @@ int main(int argc, char* argv[]) {
                 token = strtok(NULL, "\n");
                 //printf("return 0\n");         DEBUGG
                 Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-                messret = Ade(fd_server);
-                if(strcmp("E", messret->type) == 0) {
-                    printf("%s\n",messret->msg);
-                    fflush(0);
-                    free(cmz);
-                    free(messret);
-                    continue;
-                }
-                printf("%s\n",messret->msg);
-                logged_in=1;
-                fflush(0);
                 free(cmz);
-                free(messret);
-                break;
+                continue;
             }
 
             if(strcmp(token, "login_utente") == 0) {
                 token = strtok(NULL, "\n");
                 Caronte(fd_server, token,MSG_LOGIN_UTENTE);
-                messret = Ade(fd_server);
-                if (strcmp("E", messret->type) == 0) {
-                    printf("%s\n",messret->msg);
-                    fflush(0);
-                    free(cmz);
-                    free(messret);
-                    continue;
-                }
-                printf("%s\n",messret->msg);
-                logged_in=1;
-                fflush(0);
-                free(cmz);
-                free(messret);
-                break;
-            }
-            Caronte(fd_server, "Comando non disponibile", MSG_ERR);
-            free(cmz);
-        }
-
-        //Inizio fase in cui il client è loggato e in gioco oppure in attesa della partita
-        int in_game = 1;
-        //finchè in game...
-        while(in_game){
-            char* cmz = malloc(134*sizeof(char));  
-            SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
-
-            if(strcmp(cmz, "aiuto\n") == 0) {
-                printf(HELP_MESSAGE);
-                fflush(0);
                 free(cmz);
                 continue;
             }
+
             if (strcmp(cmz, "matrice\n") == 0) {
-                Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
-                messret = Ade(fd_server);
-                //C'è una partita in corso e ricevo la matrice corrente
-                if (strcmp("M", messret->type)) {
-                    Carica_Matrix_Stringa(messret->msg, matrice);
-                    printf("ciao\n");
-                    fflush(0);
-                    Stampa_Matrix(matrice);
-                }
-                //C'è la fase di pausa della durata di 1 minuto, aspetto che finisca
-                if (messret->type == MSG_TEMPO_ATTESA) {
-
-                }
-                
-                free(messret);
-                /*      TEMPORANEO POI DEVO RICEVERE ANCHE IL TEMPO
-                messret = Ade(fd_server);
-                printf(messret->msg);
-                free(messret);
-                fflush(0);
-                */
-                free(cmz);
-                continue;
-            }
-
-            if (strcmp(cmz, "fine\n") == 0) {
-                Caronte(fd_server, "Chiusura client", MSG_FINE);
-                in_game = 0;
-                close(fd_server);
-                printf("Comando fine\n");
-                fflush(0);
-                free(cmz);
-                exit(EXIT_SUCCESS);
-                return 0;
-            }
-            
-            if (strcmp(cmz, "cancella_registrazione\n") == 0) {
-                Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
-                messret = Ade(fd_server);
-                if (strcmp("E", messret->type) == 0) {
-                    printf("%s\n",messret->msg);
-                    fflush(0);
-                    free(cmz);
-                    free(messret);
-                    continue;
-                }
-                printf("%s", messret->msg);
-                fflush(0);
-                free(messret);
-                free(cmz);
-                in_game = 0;
-                break;
-            }
+            Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
             free(cmz);
-            Caronte(fd_server, "Comando2 non disponibile", MSG_ERR);
-            //in_game = 0;
+            continue;
         }
+        if (strcmp(cmz, "cancella_registrazione\n") == 0) {
+            Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
+            free(cmz);
+            continue;
+        }
+         Caronte(fd_server, "Comando non disponibile", MSG_ERR);
+         free(cmz);
+            
+            
+
+
         /*
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
