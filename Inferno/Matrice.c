@@ -58,11 +58,11 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     fseek(tempfd, 0, SEEK_SET);
 
     fgets(stringatmp,sizeof(stringatmp), tempfd);
-    printf("%s\n", stringatmp);
-    fflush(0);
+                            //printf("%s\n", stringatmp);
+                            //fflush(0);
     token = strtok(stringatmp," ");
-    printf("%s\n", stringatmp);
-    fflush(0);
+                            //printf("%s\n", stringatmp);
+                            //fflush(0);
     //Memorizzo nella matrice la lettera corrispondente dal file
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
@@ -75,6 +75,12 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
             }
         }
     //Imposto l'offset alla prossima riga
+    /*if (ftell(tempfd) == EOF) {
+        *offset = 0;
+    }
+    else{
+        *offset = ftell(tempfd);
+    }*/
     //*offset = ftell(tempfd);
     fclose(tempfd);
 }
@@ -84,9 +90,14 @@ void Genera_Matrix(Lettera** matrice, int seed) {
     srand(seed);
     for(int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            matrice[i][j].lettera = (rand()%(90-65))+65;
-            if (strcmp(matrice[i][j].lettera, "Q") == 0 )
-                matrice[i][j].lettera = "Qu";
+            char lett;
+            lett = (rand()%(90-65+1))+65;
+            if (lett == 'Q' )
+                strcpy(matrice[i][j].lettera, "Qu");
+            else
+                matrice[i][j].lettera = lett;
+            printf("%c", matrice[i][j].lettera);
+            fflush(0);
         }
     }
 }

@@ -90,20 +90,25 @@ void* asdrubale (void* arg) {
                 break;
             case MSG_MATRICE:
                 //Controllo se sono in fase di pausa o in game
-
+                printf("%s\n", msg->msg);
+                fflush(0);
                 //TEMPORANEO
                 char* file = "../Paradiso/matrici_disponibili.txt";
-                int offset;
-                int* offsetp = &offset;
-                *offsetp = 0;
-                Carica_Matrix_File(file, matrice, offsetp);
+                //int offset;
+                //int* offsetp = &offset;
+                //*offsetp = 0;
+                printf("ciao");
+                fflush(0);
+                Carica_Matrix_File(file, matrice, 0);
                 // TEMPORANEO
 
                 //Se non sono in fase di pausa, invio la matrice
-                char* stringa_matrice;
+                char* stringa_matrice[64];
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
                         strcat(stringa_matrice, matrice[i][j].lettera);
+                        printf("%s", stringa_matrice);
+                        fflush(0);
                     }
                 }
                 Caronte(fd_client, stringa_matrice, MSG_MATRICE);
@@ -112,6 +117,8 @@ void* asdrubale (void* arg) {
                 //Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
                 printf("Matrice");
                 break;
+            case MSG_PAROLA:
+
             case MSG_CANCELLA_UTENTE:
                 char* tmpusername = Rimuovi_Giocatore(lista,giocatore->nome);
                 printf("%s\n",tmpusername);
@@ -173,10 +180,13 @@ int main (int argc, char* argv[]) {
     matrice = Crea_Matrix();
     char* file = "../Paradiso/matrici_disponibili.txt";
     Carica_Matrix_File(file, matrice, 0);
+    //Genera_Matrix(matrice, 2);
+                    //printf("ciao\n");
+                    //fflush(0);
     Stampa_Matrix(matrice);
     int contr;
     contr = Controlla_Parola_Matrice(matrice,"CASI");
-    printf("%d", contr);
+    printf("%d\n", contr);
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
