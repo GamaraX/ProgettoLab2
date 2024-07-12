@@ -159,8 +159,10 @@ int main(int argc, char* argv[]) {
                 Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
                 messret = Ade(fd_server);
                 //C'è una partita in corso e ricevo la matrice corrente
-                if (messret->type == MSG_MATRICE) {
+                if (strcmp("M", messret->type)) {
                     Carica_Matrix_Stringa(messret->msg, matrice);
+                    printf("ciao\n");
+                    fflush(0);
                     Stampa_Matrix(matrice);
                 }
                 //C'è la fase di pausa della durata di 1 minuto, aspetto che finisca
