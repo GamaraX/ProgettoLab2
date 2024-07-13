@@ -47,15 +47,20 @@ void receiver(void* args) {
                 printf("%s\n", received_msg->msg);
                 fflush(0);
                 break;
-            case MSG_FINE:
 
+            case MSG_FINE:
                 exit(EXIT_SUCCESS);
+
             case MSG_MATRICE:
                 matrice = Crea_Matrix();
                 Carica_Matrix_Stringa(matrice, received_msg->msg);
                 Stampa_Matrix(matrice);
                 //fare free matrice
                 break;
+            case MSG_PUNTI_PAROLA:
+                printf("hai totalizzato %s punti!", received_msg->msg);
+                break;
+
             default:
                 break;
         }
@@ -145,37 +150,37 @@ int main(int argc, char* argv[]) {
         printf("%s", "[PROMPT PAROLIERE]-->");
         fflush(0);
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
-            if(strcmp(cmz, "aiuto\n") == 0) {
-                printf(HELP_MESSAGE);
-                fflush(0);
-                free(cmz);
-                continue;
-            }
-            if (strcmp(cmz, "fine\n") == 0) {
-                Caronte(fd_server, "Chiusura client", MSG_FINE);
-                close(fd_server);
-                free(cmz);
-                exit(EXIT_SUCCESS);
-                return 0;
-            }
-            char* token;
-            token = strtok(cmz, " ");
-            if (strcmp(token, "registra_utente") == 0) {
-                token = strtok(NULL, "\n");
-                //printf("return 0\n");         DEBUGG
-                Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-                free(cmz);
-                continue;
-            }
+        if(strcmp(cmz, "aiuto\n") == 0) {
+            printf(HELP_MESSAGE);
+            fflush(0);
+            free(cmz);
+            continue;
+        }
+        if (strcmp(cmz, "fine\n") == 0) {
+            Caronte(fd_server, "Chiusura client", MSG_FINE);
+            close(fd_server);
+            free(cmz);
+            exit(EXIT_SUCCESS);
+            return 0;
+        }
+        char* token;
+        token = strtok(cmz, " ");
+        if (strcmp(token, "registra_utente") == 0) {
+            token = strtok(NULL, "\n");
+            //printf("return 0\n");         DEBUGG
+            Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
+            free(cmz);
+            continue;
+        }
 
-            if(strcmp(token, "login_utente") == 0) {
-                token = strtok(NULL, "\n");
-                Caronte(fd_server, token,MSG_LOGIN_UTENTE);
-                free(cmz);
-                continue;
-            }
+        if(strcmp(token, "login_utente") == 0) {
+            token = strtok(NULL, "\n");
+            Caronte(fd_server, token,MSG_LOGIN_UTENTE);
+            free(cmz);
+            continue;
+        }
 
-            if (strcmp(cmz, "matrice\n") == 0) {
+        if (strcmp(cmz, "matrice\n") == 0) {
             Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
             free(cmz);
             continue;
@@ -185,74 +190,18 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
-         Caronte(fd_server, "Comando non disponibile", MSG_ERR);
-         printf("Comando non disponobile\n");
-         fflush(0);
-         free(cmz);
-            
-            
-
-
-        /*
-        if(strcmp(cmz, "aiuto\n") == 0) {
-            printf(HELP_MESSAGE);
-            fflush(0);
+        if (strcmp(cmz, "p") == 0) {
+            token = strtok(NULL, "\n");
+            for (int i = 0; token[i] != '\n'; i++) {
+                token[i] = toupper(token[i]);
+            }
+            Caronte(fd_server, token, MSG_PAROLA);
             free(cmz);
             continue;
         }
-        if (strcmp(cmz, "matrice\n") == 0) {
-            printf("a");
-            continue;
-        }
-        if (strcmp(cmz, "fine\n") == 0) {
-            Caronte(fd_server, "Chiusura client", MSG_FINE);
-            close(fd_server);
-            printf("Comando fine");
-            fflush(0);
-            exit(EXIT_SUCCESS);
-            return 0;
-        }
-        if (strcmp(cmz, "cancella_registrazione\n") == 0) {
-            Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
-            messret = Ade(fd_server);
-            printf("%s", messret->msg);
-            fflush(0);
-            free(messret);
-            continue;
-        }
-        if (strcmp(cmz, "show-msg\n") == 0) {
-            printf("fai qualcosa");
-            continue;
-        }
-
-        //sezione della tokenizzazione
-        char* token;
-        token = strtok(cmz, " ");
-        if (strcmp(token, "registra_utente") == 0) {
-            token = strtok(NULL, "\n");
-            //printf("return 0\n");         DEBUGG
-            Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
-            messret = Ade(fd_server);
-            printf("%s\n",messret->msg);
-            fflush(0);
-            free(messret);
-            continue;
-        }
-        if (strcmp(token, "p") == 0) {
-            strtok(NULL, "\n");
-            printf("fai qualcosa");
-            continue;
-        }
-        if(strcmp(token, "login_utente") == 0) {
-            token = strtok(NULL, "\n");
-            Caronte(fd_server, token,MSG_LOGIN_UTENTE);
-            messret = Ade(fd_server);
-            printf("%s\n",messret->msg);
-            fflush(0);
-            free(messret);
-            continue;
-        }
-        */
+         Caronte(fd_server, "Comando non disponibile", MSG_ERR);
+         fflush(0);
+         free(cmz);
 
     }
 
