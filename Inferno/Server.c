@@ -235,13 +235,13 @@ int main (int argc, char* argv[]) {
                     //fflush(0);
     Stampa_Matrix(matrice);
     int contr;
-    contr = Controlla_Parola_Matrice(matrice,"CASE");
+    contr = Controlla_Parola_Matrice(matrice,"CASI");
     printf("%d\n", contr);
     fflush(0);
     int diz;
-    diz = Ricerca_Binaria_Dizionario(file2, "casi");
-    printf("%d\n", diz);
-    fflush(0);
+    //diz = Ricerca_Binaria_Dizionario(file2, "casi");
+    //printf("%d\n", diz);
+    //fflush(0);
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");

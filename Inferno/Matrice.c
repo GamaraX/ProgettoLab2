@@ -97,8 +97,8 @@ void Genera_Matrix(Lettera** matrice, int seed) {
             if (lett == 'Q' )
                 strcpy(matrice[i][j].lettera, "Qu");
             else
-                matrice[i][j].lettera = lett;
-            printf("%c", matrice[i][j].lettera);
+                strcpy(matrice[i][j].lettera,lett);
+            printf("%s", matrice[i][j].lettera);
             fflush(0);
         }
     }
@@ -106,53 +106,76 @@ void Genera_Matrix(Lettera** matrice, int seed) {
 
 //#todo attenzione perche' c'e' un'ottimizzazione che puoi fare: far partire la ricerca solo se la prima lettera coincide (di sicuro non trovi la parole ALBERO partendo dalla lettera E)
 int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
-    //Cerco nella matrice la lettera pos-esima della parola dell'utente
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            //if(matrice[i][j].lettera == parola_utente[0])
-                if(DFS_Matrix(matrice, parola_utente, 0, i, j) == 1)
-                    return 1;
-            }
-        
+    // Cerco nella matrice la lettera pos-esima della parola dell'utente
+    char lettiniz[3];
+    if (parola_utente[0] == 'Q') {
+        strcpy(lettiniz, "Qu");
+
     }
+    else {
+        lettiniz[0] = parola_utente[0];
+        lettiniz[1] = '\0';
+    }
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                // Uso strcmp per confrontare le stringhe
+                if (strcmp(matrice[i][j].lettera, lettiniz) == 0) {
+                    if (DFS_Matrix(matrice, parola_utente, 0, i, j) == 1) {
+                        return 1;
+                    }
+                }
+            }
+        }
     return 0;
 }
 
 
 int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int colonna) {
-    if (strlen(parola_utente) == pos)
-        return 1;
 
     // Controllo se sto uscendo fuori dalla matrice
-    if (riga < 0 || riga >= 4 || colonna < 0 || colonna >= 4)
+    if (riga < 0 || riga >= 4 || colonna < 0 || colonna >= 4){
         return 0;
+    }
 
-    char lett[2];
-
+    char* lett = malloc(3* sizeof(char));
     // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come Qu
     if (parola_utente[pos] == 'Q') {
         strcpy(lett, "Qu");
     } else {
         lett[0] = parola_utente[pos];
+        lett[1] = '\0';
     }
+    if (pos + strlen(lett) >= strlen(parola_utente))
+        return 1;
 
+    printf("Controllo matrice[%d][%d]: %s con %s\n", riga, colonna, matrice[riga][colonna].lettera, lett);
+    fflush(0);
     // Controllo se la lettera pos-esima della parola utente è presente nella matrice, oppure se l'elemento della matrice è già stato visitato o meno
     if (strcmp(matrice[riga][colonna].lettera, lett) != 0 || matrice[riga][colonna].visitato) {
+        free(lett);
         return 0;
     }
 
     matrice[riga][colonna].visitato = 1;
 
     // Chiamate ricorsive per le 4 direzioni possibili
-    int trovato1 = DFS_Matrix(matrice, parola_utente, pos + 1, riga + 1, colonna);
-    int trovato2 = DFS_Matrix(matrice, parola_utente, pos + 1, riga - 1, colonna);
-    int trovato3 = DFS_Matrix(matrice, parola_utente, pos + 1, riga, colonna + 1);
-    int trovato4 = DFS_Matrix(matrice, parola_utente, pos + 1, riga, colonna - 1);
-
+    int trovato = DFS_Matrix(matrice, parola_utente, pos + strlen(lett), riga + 1, colonna)
+               || DFS_Matrix(matrice, parola_utente, pos + strlen(lett), riga - 1, colonna)
+               || DFS_Matrix(matrice, parola_utente, pos + strlen(lett), riga, colonna + 1)
+               || DFS_Matrix(matrice, parola_utente, pos + strlen(lett), riga, colonna - 1);
     matrice[riga][colonna].visitato = 0;
 
-    return trovato1 || trovato2 || trovato3 || trovato4;
+    free(lett);
+
+    return trovato;
+    //return trovato1 || trovato2 || trovato3 || trovato4;
 }
 
-
-//#todo dealloca la matrice, prende in ingresso Lettera** e fa la free di tutti i campi (ritorna void)
+//#todofatta dealloca la matrice, prende in ingresso Lettera** e fa la free di tutti i campi (ritorna void)
+void Libera_Matrix(Lettera** matrice) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            free(matrice[i][j].lettera);
+        }
+    }
+}

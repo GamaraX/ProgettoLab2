@@ -186,6 +186,8 @@ int main(int argc, char* argv[]) {
             continue;
         }
          Caronte(fd_server, "Comando non disponibile", MSG_ERR);
+         printf("Comando non disponobile\n");
+         fflush(0);
          free(cmz);
             
             
