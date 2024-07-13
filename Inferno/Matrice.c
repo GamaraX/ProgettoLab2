@@ -44,6 +44,7 @@ void Carica_Matrix_Stringa(Lettera** matrice, char* stringa) {
         }
     }
 }
+
 //#todo fix, usare funzione Carica_Matrix_Stringa e usa la stringa che leggi
 //#todo fixare offest
 void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
@@ -88,29 +89,39 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
 //#todo fixare genera matrix ma in realta' devi solo generare una stringa di 16 caratteri separati da spazio (controllare la Q come gia` fai) e poi chiamare Carica_Matrix_Stringa
 
 void Genera_Matrix(Lettera** matrice, int seed) {
+    printf("ciao1\n");
+    fflush(0);
     //Pongo il seed della funzione rand al valore seed passato come argomento
     srand(seed);
-    for(int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            char lett;
-            lett = (rand()%(90-65+1))+65;
-            if (lett == 'Q' )
-                strcpy(matrice[i][j].lettera, "Qu");
-            else
-                strcpy(matrice[i][j].lettera,lett);
-            printf("%s", matrice[i][j].lettera);
-            fflush(0);
+    char stringa[64] = "";
+    printf("ciao2\n");
+    fflush(0);
+    for(int i = 0; i < 16; i++) {
+        //
+        printf("ciao3\n");
+        fflush(0);
+
+        char lett;
+        lett = (rand()%(90-65+1))+65;
+
+        if (lett == 'Q' )
+            strcat(stringa, "Qu");
+        else {
+            char temp[2] = {lett, '\0'};
+            strcat(stringa, temp);
+        }
+        if (i < 15) {
+            strcat(stringa, " ");
         }
     }
+    Carica_Matrix_Stringa(matrice, stringa);
 }
 
-//#todo attenzione perche' c'e' un'ottimizzazione che puoi fare: far partire la ricerca solo se la prima lettera coincide (di sicuro non trovi la parole ALBERO partendo dalla lettera E)
 int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     // Cerco nella matrice la lettera pos-esima della parola dell'utente
     char lettiniz[3];
     if (parola_utente[0] == 'Q') {
         strcpy(lettiniz, "Qu");
-
     }
     else {
         lettiniz[0] = parola_utente[0];
@@ -131,7 +142,6 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
 
 
 int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int colonna) {
-
     // Controllo se sto uscendo fuori dalla matrice
     if (riga < 0 || riga >= 4 || colonna < 0 || colonna >= 4){
         return 0;
@@ -175,7 +185,7 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
 void Libera_Matrix(Lettera** matrice) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            free(matrice[i][j].lettera);
+            strcpy(matrice[i][j].lettera, "");
         }
     }
 }

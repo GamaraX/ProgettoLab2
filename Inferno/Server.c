@@ -229,8 +229,8 @@ int main (int argc, char* argv[]) {
     matrice = Crea_Matrix();
     char* file = "../Paradiso/matrici_disponibili.txt";
     char* file2 = "../Paradiso/dictionary_ita.txt";
-    Carica_Matrix_File(file, matrice, 0);
-    //Genera_Matrix(matrice, 2);
+    //Carica_Matrix_File(file, matrice, 0);
+    Genera_Matrix(matrice, 3);
                     //printf("ciao\n");
                     //fflush(0);
     Stampa_Matrix(matrice);
