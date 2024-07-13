@@ -3,11 +3,12 @@
 //Creazione nodo Parola
 typedef struct par {
     char* parola;
+    int punteggio;
     struct par* next;
 } Parola;
-
 //Lista Parole
 typedef Parola * Lista_Parole;
+//#todo calcola punteggio di questa struct, poi calcola punteggio utente ecc.......ricordarsi di fare sempre le deallocazioni, funzione per aggiungere una parola indovinata blabla
 
 //Creazione nodo Giocatore
 typedef struct gio {
@@ -16,6 +17,8 @@ typedef struct gio {
     int punti;
     int fd_client;
     int loggato;
+    //#todo ListaParole è una lista linkata che oltre al next (per scorrerla) ha due campi valore, uno char* per la parole e uno int per il punteggio guadagnato da quella parola
+    Lista_Parole* lista_parole;
     struct gio* next;
 }Giocatore;
 
@@ -32,6 +35,7 @@ typedef struct arg{
     int fd_client;
     pthread_t thread_id;
     Lista_Giocatori_Concorrente* lista;
+    char* file_diz;
 } ThreadArgs;
 
 //Funzione che permette al client di giocare
