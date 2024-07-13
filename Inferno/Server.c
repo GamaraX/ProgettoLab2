@@ -20,14 +20,25 @@
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
 
-
+typedef struct imp {
+    int offset;
+    Lettera** matrice;
+    int Tempo_di_Gioco;
+    int pausa;
+    char* file_matrice;
+    int durata_minuti;
+    int seed;
+    char* file_diz;
+    int tempo_disconnessione;
+}Impostazioni_Gioco;
 
 //#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
 Lettera** matrice;
 Lista_Giocatori_Concorrente* lista;
 int ingame = 0;
-
+char* parole[279890];
+int conteggio_parole;
 
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
@@ -38,18 +49,45 @@ void GestoreSigint(int signum) {
         }
         gioctemp = gioctemp->next;
     }
+    Dealloca_Dizionario(parole, conteggio_parole);
     exit(EXIT_SUCCESS);
 }
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
+    Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
     int offset = 0;
+    while(1) {
+        if (argcast->file_matrice != NULL) {
+            Carica_Matrix_File(argcast->file_matrice, matrice, argcast->offset);
+        }
+        else{
+            Genera_Matrix(matrice, argcast->seed);
+            Stampa_Matrix(matrice);
+            //#todo qui avvisare gli utenti che la matrice è stata creata!!!!!!!!!!!!!!!!!!!!e inviala!!!!!!!!!!!!
+        }
+        ingame = 1;
+        if (argcast->Tempo_di_Gioco != NULL) {
+            sleep(60 * argcast->Tempo_di_Gioco);
+        }
+        else {
+            sleep(20);
+        }
+        ingame = 0;
+        //parte lo scorer
+
+        //viene incrementato l'offset
+
+        ingame = 2;
+        sleep(60);
+    }
     return NULL;
 }
 
 void* asdrubale (void* arg) {
 
     //
+
     int retvalue;
     //#todo variabile per timestamp ultimo comando  
     //#todo starta un thread e passa quel timestamp come puntatore, passa anche giocatore, e quando stacchi, ricordati di controllare se per caso si e` loggato, nel caso setta loggato=0
@@ -123,18 +161,13 @@ void* asdrubale (void* arg) {
             case MSG_MATRICE:
                 //#todolater fare in modo che non venga ricaricata da file ogni volta ma cambiata da qualche handler che gestisce sto game
                 //Controllo se sono in fase di pausa o in game
-                printf("%s\n", msg->msg);
-                fflush(0);
-                //TEMPORANEO
-                char* file = "../Paradiso/matrici_disponibili.txt";
-                //int offset;
-                //int* offsetp = &offset;
-                //*offsetp = 0;
-                                    //printf("ciao\n");
-                                    //fflush(0);
-                Carica_Matrix_File(file, matrice, 0);
-                // TEMPORANEO
+                                            printf("%s\n", msg->msg);
+                                            fflush(0);
 
+                if (giocatore == NULL) {
+                    Caronte(fd_client, "Errore, devi registrarti per visualizzare la matrice", MSG_ERR);
+                    break;
+                }
                 //Se non sono in fase di pausa, invio la matrice
                 char* stringa_matrice[64];
                 for (int i = 0; i < 4; i++) {
@@ -149,7 +182,24 @@ void* asdrubale (void* arg) {
                 //Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
                 break;
             case MSG_PAROLA:
-
+                int punti = 0;
+                if (giocatore == NULL) {
+                    Caronte(fd_client, "Errore, non puoi inviare parole, non sei loggato", MSG_ERR);
+                    break;
+                }
+                if (Controlla_Parola_Matrice(matrice, msg->msg) == 1 && Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg) == 1) {
+                    if(strstr(msg->msg, "QU") != NULL) {
+                        punti = strlen(msg->msg)-1;
+                    }
+                    else {
+                        punti = strlen(msg->msg);
+                    }
+                    ScriviLog(giocatore->nome, "Immissione", msg->msg);
+                    Caronte(fd_client, punti, MSG_PUNTI_PAROLA);
+                    break;
+                }
+                Caronte(fd_client, "Parola non valida", MSG_ERR);
+                break;
             case MSG_CANCELLA_UTENTE:
                 if(giocatore == NULL) {
                     Caronte(fd_client, "Errore, non sei loggato", MSG_ERR);
@@ -201,11 +251,11 @@ void* asdrubale (void* arg) {
             //Aggiungere altri casi
             default:
                 printf("Comando non riconosciuto!\n");
+                Caronte(fd_client, "Errore Comando non disponibile", MSG_ERR);
                 //Invia messaggio comando sconosciuto?
                 fflush(0);
                 break;
         }
-
         free(msg->msg);
         free(msg->type);
     }
@@ -214,6 +264,9 @@ void* asdrubale (void* arg) {
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
+
+    Impostazioni_Gioco* settings = malloc(sizeof(Impostazioni_Gioco));
+    //Gestire parametri passati opzionali
 
     //Struct sigaction
     struct sigaction sa;
@@ -227,21 +280,20 @@ int main (int argc, char* argv[]) {
 
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
+    
+    //TEMPORANEO
     char* file = "../Paradiso/matrici_disponibili.txt";
     char* file2 = "../Paradiso/dictionary_ita.txt";
+    //offset da definire e aggiustare
     //Carica_Matrix_File(file, matrice, 0);
-    Genera_Matrix(matrice, 3);
                     //printf("ciao\n");
                     //fflush(0);
-    Stampa_Matrix(matrice);
-    int contr;
-    contr = Controlla_Parola_Matrice(matrice,"CASI");
-    printf("%d\n", contr);
+    conteggio_parole = Carica_Dizionario(file2, parole);
+    int risultato=Ricerca_Binaria_Dizionario(parole, conteggio_parole, "caterina");
+    printf("Ricerca: %d\n", risultato);
     fflush(0);
-    int diz;
-    //diz = Ricerca_Binaria_Dizionario(file2, "casi");
-    //printf("%d\n", diz);
-    //fflush(0);
+
+    //TEMPORANEO
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
@@ -251,6 +303,9 @@ int main (int argc, char* argv[]) {
     Inizializza_Lista(lista);
     InizializzaMutexLog();
     
+    //Settaggio delle impostazioni
+    settings->matrice = matrice;
+    settings->offset = 0;
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;
@@ -277,7 +332,7 @@ int main (int argc, char* argv[]) {
     SYSC(retvalue, listen(fd_server, 32), "Errore listen server");
 
     //Creazione Cerbero -> ricordarsi/capire cosa fa
-    SYST(retvalue, pthread_create(&Cerbero, NULL, Argo, NULL), "Errore creazione Cerbero");
+    SYST(retvalue, pthread_create(&Cerbero, NULL, Argo, settings), "Errore creazione Cerbero");
 
     //creo ed associo un thread per ogni client che si connette al server, ogni client applica la funzione asdrubale
     while(1) {
@@ -285,6 +340,7 @@ int main (int argc, char* argv[]) {
         pthread_t tidtemp;
         //Alloco spazio per i parametri del thread
         ThreadArgs* thread_args = malloc(sizeof(ThreadArgs));
+        thread_args->file_diz = settings->file_diz;
                 
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
         //Inizializza ThreadArgs
