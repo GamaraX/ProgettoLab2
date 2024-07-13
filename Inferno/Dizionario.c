@@ -16,47 +16,65 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
-//
-#define Lunghezza_Parola_Massima 50
 
-int Ricerca_Binaria_Dizionario(char* file, char* parola_utente){
-    //Apro il file dizionario
-    FILE* tempfd = fopen(file,"r");
-    //
-    if (tempfd == NULL) {
-        perror("Errore apertura file");
-        return;
-    }
-    //
-    char linea[Lunghezza_Parola_Massima];
-    int inizio, mezzo;
-    fseek(tempfd, 0, SEEK_END);
-    int fine = ftell(tempfd);
-    //
-    while(inizio <= fine) {
-        mezzo = (inizio-fine) / 2;
-        fseek(tempfd, mezzo, SEEK_SET);
-        //
-        if (mezzo != 0) {
-            while(fgetc(tempfd) != '\n' && ftell(tempfd) > 1) 
-                fseek(tempfd, -2, SEEK_CUR);
-        }
 
-        //
-        if(fgets(linea,sizeof(linea), tempfd) == NULL)
-            break;
-        linea[strcspn(linea, "\n")] = 0;
-        //
-        if (strcmp(linea, parola_utente) == 0) {
-            fclose(tempfd);
-            return 1;
+#define MAX_PAROLE 279875
+#define MAX_LUNGHEZZA 100
+
+
+
+int Carica_Dizionario(const char *nomeFile, char *parole[]) {
+    char buffer[MAX_LUNGHEZZA];
+    int conteggio = 0;
+    FILE *file = fopen(nomeFile, "r");
+    if (!file) {
+        perror("Errore nell'aprire il file");
+        return -1; // Restituisci -1 in caso di errore
+    }
+    
+    // Leggi le parole dal file
+    while (fscanf(file, "%s", buffer) == 1 && conteggio < MAX_PAROLE) {
+        
+        parole[conteggio] = malloc(strlen(buffer) + 1);
+        if (!parole[conteggio]) {
+            perror("Errore di allocazione della memoria");
+            fclose(file);
+            return -1; // Restituisci -1 in caso di errore
         }
-        else if (strcmp(linea, parola_utente) < 0)
-            inizio = ftell(tempfd);
-        else {
-            fine = mezzo-1;
+        strcpy(parole[conteggio], buffer);
+        conteggio++;
+    }
+    
+
+    fclose(file);
+    return conteggio; // Restituisci il numero di parole caricate
+}
+
+
+int Ricerca_Binaria_Dizionario(char* parole[], int conteggio, const char *parolaDaCercare) {
+    int sinistra = 0, destra = conteggio - 1;
+    int trovato = 0;
+
+    while (sinistra <= destra) {
+        int centro = (sinistra + destra) / 2;
+        
+        int confronto = strcmp(parole[centro], parolaDaCercare);
+        
+        if (confronto == 0) {
+            trovato = 1; // Parola trovata
+            break; // Esci dal ciclo se trovata
+        } else if (confronto < 0) {
+            sinistra = centro + 1; // Cerca a destra
+        } else {
+            destra = centro - 1; // Cerca a sinistra
         }
     }
-    fclose(tempfd);
-    return 0;
+
+    return trovato; // Restituisce 1 se trovata, 0 altrimenti
+}
+
+void Dealloca_Dizionario(char* parole[], int conteggio) {
+    for(int i=0; i<conteggio; i++){
+        free(parole[i]);
+    }
 }
