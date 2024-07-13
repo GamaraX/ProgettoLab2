@@ -228,6 +228,7 @@ int main (int argc, char* argv[]) {
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
     char* file = "../Paradiso/matrici_disponibili.txt";
+    char* file2 = "../Paradiso/dictionary_ita.txt";
     Carica_Matrix_File(file, matrice, 0);
     //Genera_Matrix(matrice, 2);
                     //printf("ciao\n");
@@ -236,6 +237,11 @@ int main (int argc, char* argv[]) {
     int contr;
     contr = Controlla_Parola_Matrice(matrice,"CASE");
     printf("%d\n", contr);
+    fflush(0);
+    int diz;
+    diz = Ricerca_Binaria_Dizionario(file2, "casi");
+    printf("%d\n", diz);
+    fflush(0);
 
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
