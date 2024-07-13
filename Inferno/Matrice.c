@@ -86,26 +86,19 @@ void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
     //*offset = ftell(tempfd);
     fclose(tempfd);
 }
-//#todo fixare genera matrix ma in realta' devi solo generare una stringa di 16 caratteri separati da spazio (controllare la Q come gia` fai) e poi chiamare Carica_Matrix_Stringa
 
 void Genera_Matrix(Lettera** matrice, int seed) {
-    printf("ciao1\n");
-    fflush(0);
     //Pongo il seed della funzione rand al valore seed passato come argomento
     srand(seed);
     char stringa[64] = "";
-    printf("ciao2\n");
-    fflush(0);
+
     for(int i = 0; i < 16; i++) {
         //
-        printf("ciao3\n");
-        fflush(0);
-
         char lett;
         lett = (rand()%(90-65+1))+65;
 
         if (lett == 'Q' )
-            strcat(stringa, "Qu");
+            strcat(stringa, "QU");
         else {
             char temp[2] = {lett, '\0'};
             strcat(stringa, temp);
@@ -121,7 +114,7 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     // Cerco nella matrice la lettera pos-esima della parola dell'utente
     char lettiniz[3];
     if (parola_utente[0] == 'Q') {
-        strcpy(lettiniz, "Qu");
+        strcpy(lettiniz, "QU");
     }
     else {
         lettiniz[0] = parola_utente[0];
@@ -148,9 +141,9 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     }
 
     char* lett = malloc(3* sizeof(char));
-    // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come Qu
+    // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come QU
     if (parola_utente[pos] == 'Q') {
-        strcpy(lett, "Qu");
+        strcpy(lett, "QU");
     } else {
         lett[0] = parola_utente[pos];
         lett[1] = '\0';
@@ -181,7 +174,7 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     //return trovato1 || trovato2 || trovato3 || trovato4;
 }
 
-//#todofatta dealloca la matrice, prende in ingresso Lettera** e fa la free di tutti i campi (ritorna void)
+
 void Libera_Matrix(Lettera** matrice) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
