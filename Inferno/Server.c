@@ -22,10 +22,8 @@
 #include "../Purgatorio/Dizionario.h"
 
 typedef struct imp {
-    int offset;
     Lettera** matrice;
     int Tempo_di_Gioco;
-    int pausa;
     char* file_matrice;
     int durata_minuti;
     int seed;
@@ -33,8 +31,18 @@ typedef struct imp {
     int tempo_disconnessione;
 }Impostazioni_Gioco;
 
+enum {
+    OPT_MATRICE = 1,
+    OPT_DURATA,
+    OPT_SEED,
+    OPT_DIZ,
+    OPT_DISCONNECT,
+};
+
 //#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
+char* filemat= "../Paradiso/matrici_disponibili.txt";
+char* filediz = "../Paradiso/dictionary_ita.txt";
 Lettera** matrice;
 Lista_Giocatori_Concorrente* lista;
 int ingame = 0;
@@ -56,31 +64,37 @@ void GestoreSigint(int signum) {
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
+    
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
     int offset = 0;
+    argcast->file_matrice = filemat;
+    FILE* tempfd;
+    //Prendo e apro il file
+    if (argcast->file_matrice != NULL) {
+        tempfd = fopen(argcast->file_matrice,"r");
+    }
+
     while(1) {
         if (argcast->file_matrice != NULL) {
-            Carica_Matrix_File(argcast->file_matrice, matrice, argcast->offset);
+            Carica_Matrix_File(tempfd, matrice);
         }
         else{
             Genera_Matrix(matrice, argcast->seed);
-            Stampa_Matrix(matrice);
             //#todo qui avvisare gli utenti che la matrice è stata creata!!!!!!!!!!!!!!!!!!!!e inviala!!!!!!!!!!!!
         }
+        Stampa_Matrix(matrice);
         ingame = 1;
-        if (argcast->Tempo_di_Gioco != NULL) {
-            sleep(60 * argcast->Tempo_di_Gioco);
-        }
-        else {
-            sleep(20);
-        }
+
+        sleep(2);
+        //sleep(argcast->durata_minuti * 60);
+        
         ingame = 0;
         //parte lo scorer
 
         //viene incrementato l'offset
 
         ingame = 2;
-        sleep(60);
+        sleep(5);
     }
     return NULL;
 }
@@ -261,10 +275,75 @@ void* asdrubale (void* arg) {
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
-    
+    //controllo se il numero di parametri passati è giusto
+    if (argc < 3) {
+        perror("Numero sbagliato di parametri passati!");
+        exit(EXIT_SUCCESS);
+    }
+
+    //controllo se il secondo parametro è il nome del server...?
+    if (strlen(argv[1]) < 9 || strlen(argv[1]) > 15) {
+        perror("Errore nome server");
+        exit(EXIT_SUCCESS);
+    }
+
+    //controllo se il terzo parametro è la porta del server (intero)
+    if (atoi(argv[2]) == 0) {
+        perror("Errore porta server");
+        exit(EXIT_SUCCESS);
+    }
+
+    int opt, indice_opt = 0, seed_ricevuto = 0; 
+
+    struct option long_opt[] = {
+        {"matrici", required_argument, 0, OPT_MATRICE},
+        {"durata", required_argument, 0, OPT_DURATA},
+        {"seed", required_argument, 0, OPT_SEED},
+        {"diz", required_argument, 0, OPT_DIZ},
+        {"disconnetti", required_argument, 0, OPT_DISCONNECT},
+        {0, 0, 0, 0, 0}
+    };
 
     Impostazioni_Gioco* settings = malloc(sizeof(Impostazioni_Gioco));
+
+    //Settaggio delle impostazioni
+    settings->matrice = matrice;
+    settings->file_diz = filediz;
+    settings->seed = rand();
+    settings->durata_minuti = 3;
+
     //Gestire parametri passati opzionali
+    
+    while ((opt = getopt_long(argc, argv, "", long_opt, &indice_opt)) != -1) {
+        switch(opt) {
+            case OPT_MATRICE:
+                settings->file_matrice = optarg;
+                break;
+            case OPT_DURATA:
+                settings->durata_minuti = optarg;
+                break;
+            case OPT_DIZ:
+                settings->file_diz = optarg;
+                break;
+            case OPT_SEED:
+                settings->seed = optarg;
+                seed_ricevuto = 1;
+                break;
+            case OPT_DISCONNECT:
+                settings->tempo_disconnessione = optarg;
+                break;
+            case '?':
+                printf("Argomento aggiuntivo\n");
+                break;
+        }
+
+        if (seed_ricevuto == 1 && strcmp(settings->file_matrice, filemat) != 0) {
+            perror("Errore, hai inserito sia un seed che un file matrice\n");
+            exit(EXIT_SUCCESS);
+        }
+        srand(settings->seed);
+        return;
+    }
 
     //Struct sigaction
     struct sigaction sa;
@@ -280,17 +359,10 @@ int main (int argc, char* argv[]) {
     matrice = Crea_Matrix();
     
     //TEMPORANEO
-    char* file = "../Paradiso/matrici_disponibili.txt";
-    char* file2 = "../Paradiso/dictionary_ita.txt";
+    
     //offset da definire e aggiustare
-    //Carica_Matrix_File(file, matrice, 0);
                     //printf("ciao\n");
                     //fflush(0);
-    conteggio_parole = Carica_Dizionario(file2, parole);
-    int risultato=Ricerca_Binaria_Dizionario(parole, conteggio_parole, "caterina");
-    printf("Ricerca: %d\n", risultato);
-    fflush(0);
-
     //TEMPORANEO
 
     //Creo la lista vuota di Giocatori
@@ -301,9 +373,6 @@ int main (int argc, char* argv[]) {
     Inizializza_Lista(lista);
     InizializzaMutexLog();
     
-    //Settaggio delle impostazioni
-    settings->matrice = matrice;
-    settings->offset = 0;
 
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server
     int fd_server, porta_server = atoi(argv[2]), retvalue;

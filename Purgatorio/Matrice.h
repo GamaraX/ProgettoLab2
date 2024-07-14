@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 //Struttura dei elementi interni alla matrice
 typedef struct lett{
     char* lettera;
@@ -15,7 +17,7 @@ void Stampa_Matrix(Lettera** matrice);
 void Carica_Matrix_Stringa(Lettera** matrice, char* stringa);
 
 //Funzione che crea la matrice da un file
-void Carica_Matrix_File(char* file, Lettera** matrice, int* offset);
+void Carica_Matrix_File(FILE* file, Lettera** matrice);
 
 //Funzione che crea la matrice randomica
 void Genera_Matrix(Lettera** matrice, int seed);

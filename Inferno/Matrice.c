@@ -45,51 +45,28 @@ void Carica_Matrix_Stringa(Lettera** matrice, char* stringa) {
     }
 }
 
-//#todo fix, usare funzione Carica_Matrix_Stringa e usa la stringa che leggi
-//#todo fixare offest
-void Carica_Matrix_File(char* file, Lettera** matrice, int* offset) {
-    char* token, stringatmp[48];
-    //Prendo e apro il fileù
-    FILE* tempfd = fopen(file,"r");
+void Carica_Matrix_File(FILE* file, Lettera** matrice) {
+    char stringatmp[48];
+    
     //Controllo se il file esiste o ci sono errori/corruzioni
-    if (tempfd == NULL) {
+    if (file == NULL) {
         perror("Errore apertura file");
         return;
     }
-    //Inizio a leggere dalla prima riga ogni lettera fino alla fine della riga
-    fseek(tempfd, 0, SEEK_SET);
 
-    fgets(stringatmp,sizeof(stringatmp), tempfd);
-                            //printf("%s\n", stringatmp);
-                            //fflush(0);
-    token = strtok(stringatmp," ");
-                            //printf("%s\n", stringatmp);
-                            //fflush(0);
-    //Memorizzo nella matrice la lettera corrispondente dal file
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                /*
-                printf("%s", token);
-                fflush(0);
-                */
-               strcpy(matrice[i][j].lettera, token);
-                token = strtok(NULL, " ");
-            }
-        }
-    //Imposto l'offset alla prossima riga
-    /*if (ftell(tempfd) == EOF) {
-        *offset = 0;
+    if(fgets(stringatmp,sizeof(stringatmp), file) == NULL) {
+        printf("Fine file\n");
+        fflush(0);
+        fseek(file, 0, SEEK_SET);
+        fgets(stringatmp,sizeof(stringatmp), file);
     }
-    else{
-        *offset = ftell(tempfd);
-    }*/
-    //*offset = ftell(tempfd);
-    fclose(tempfd);
+
+    Carica_Matrix_Stringa(matrice, stringatmp);
+    
 }
 
 void Genera_Matrix(Lettera** matrice, int seed) {
     //Pongo il seed della funzione rand al valore seed passato come argomento
-    srand(seed);
     char stringa[64] = "";
 
     for(int i = 0; i < 16; i++) {
