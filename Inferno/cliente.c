@@ -23,6 +23,7 @@
 Lettera** matrice;
 int fd_server;
 pthread_mutex_t messaggio_mutex;
+
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
     int retvalue;
@@ -32,12 +33,15 @@ void GestoreSigint(int signum) {
 
 
 void receiver(void* args) {
+    //Creo un variabile che memorizza il messaggio di ritorno dal server
     Msg* received_msg;
 
     while(1) {
+        //Memorizzo il messaggio di ritorno dal server e il tipo
         received_msg = Ade(fd_server);
         char type = (char)*received_msg->type;
         pthread_mutex_unlock(&messaggio_mutex);
+        //Switch sul tipo di ritorno
         switch(type){
             case MSG_OK:
                 printf("%s\n", received_msg->msg);
@@ -52,6 +56,7 @@ void receiver(void* args) {
                 exit(EXIT_SUCCESS);
 
             case MSG_MATRICE:
+                //Viene allocata la matrice, caricata tramite il messaggio di ritorno dal server e stampata
                 matrice = Crea_Matrix();
                 Carica_Matrix_Stringa(matrice, received_msg->msg);
                 Stampa_Matrix(matrice);
@@ -107,7 +112,7 @@ int main(int argc, char* argv[]) {
     //creo l'identificatore per il socket, salvo e casto come intero la porta del server 
     int porta_server = atoi(argv[2]);
 
-    //salvo il nome del server   ???
+    //salvo il nome del server
     char* nome_server = argv[1];
 
     //creo una struct con le informazioni del server  
@@ -138,24 +143,25 @@ int main(int argc, char* argv[]) {
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
-
-        //Creo un variabile che memorizza il messaggio di ritorno dal server
-        Msg* messret;
-
         pthread_mutex_lock(&messaggio_mutex);
+
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
-        //leggo il messaggio di input che l'utente scrive (d)al client
-        //print prompt msg
+
+        //leggo il messaggio di input che l'utente scrive al client
         printf("%s", "[PROMPT PAROLIERE]-->");
         fflush(0);
+
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
+        //Messaggio di aiuto
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
             fflush(0);
             free(cmz);
+            pthread_mutex_unlock(&messaggio_mutex);
             continue;
         }
+        //Messaggio per terminare la comunicazione
         if (strcmp(cmz, "fine\n") == 0) {
             Caronte(fd_server, "Chiusura client", MSG_FINE);
             close(fd_server);
@@ -163,8 +169,23 @@ int main(int argc, char* argv[]) {
             exit(EXIT_SUCCESS);
             return 0;
         }
+        //Messaggio per richiedere la matrice corrente
+        if (strcmp(cmz, "matrice\n") == 0) {
+            Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
+            free(cmz);
+            continue;
+        }
+        //Messaggio per cancellare un giocatore
+        if (strcmp(cmz, "cancella_registrazione\n") == 0) {
+            Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
+            free(cmz);
+            continue;
+        }
+        //Tokenizzo per gestire il secondo input dopo il comando
         char* token;
         token = strtok(cmz, " ");
+
+        ///Messaggio per registrare un giocatore
         if (strcmp(token, "registra_utente") == 0) {
             token = strtok(NULL, "\n");
             //printf("return 0\n");         DEBUGG
@@ -172,25 +193,15 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
-
+        //Messaggio per loggare un giocatore già registrato
         if(strcmp(token, "login_utente") == 0) {
             token = strtok(NULL, "\n");
             Caronte(fd_server, token,MSG_LOGIN_UTENTE);
             free(cmz);
             continue;
         }
-
-        if (strcmp(cmz, "matrice\n") == 0) {
-            Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
-            free(cmz);
-            continue;
-        }
-        if (strcmp(cmz, "cancella_registrazione\n") == 0) {
-            Caronte(fd_server, "Cancello utente", MSG_CANCELLA_UTENTE);
-            free(cmz);
-            continue;
-        }
-        if (strcmp(cmz, "p") == 0) {
+        //Messaggio per proporre una parola al server
+        if (strcmp(token, "p") == 0) {
             token = strtok(NULL, "\n");
             for (int i = 0; token[i] != '\n'; i++) {
                 token[i] = toupper(token[i]);
@@ -199,6 +210,7 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
+        //Qualsiasi altro tipo di comando non presente in quelli soprastanti
          Caronte(fd_server, "Comando non disponibile", MSG_ERR);
          fflush(0);
          free(cmz);

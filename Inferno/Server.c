@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <getopt.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -224,10 +225,6 @@ void* asdrubale (void* arg) {
                     break;
                 }
                 Lista_Giocatori listatemp = RecuperaUtente(lista,msg->msg);
-                //printf("%s\n",msg->msg);      DEBUG
-                fflush(0);
-                printf("Ricerca terminata\n");
-                fflush(0);
                 if (listatemp == NULL) {
                     Caronte(fd_client, "Errore, il giocatore non si è mai registrato. Fare una nuova registrazione utente", MSG_ERR);
                     break;
@@ -264,6 +261,7 @@ void* asdrubale (void* arg) {
 
 int main (int argc, char* argv[]) {
     // gestire errori per numero di parametri, ecc...
+    
 
     Impostazioni_Gioco* settings = malloc(sizeof(Impostazioni_Gioco));
     //Gestire parametri passati opzionali

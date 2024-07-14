@@ -17,39 +17,41 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 
-// Inizializzo la lista concorrente
+//Funzione che inizializza la lista a vuota
 void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc) {
     lista_conc->lista = NULL;
     pthread_mutex_init(&lista_conc->lock, NULL);
 }
 
-// Elimino la lista concorrente
+//Funzione che elimina la lista
 void Elimina_Lista(Lista_Giocatori_Concorrente* lista_conc) {
     pthread_mutex_destroy(&lista_conc->lock);
 }
 
-// Definisco funzione che aggiunge giocatori
+//Funzione per aggiungere Giocatori
 void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int fd) {
     pthread_mutex_lock(&lista_conc->lock);
-    // Creo un Giocatore nella lista dei Giocatori
+    //Creo un Giocatore nella lista dei Giocatori
     Giocatore* i = (Giocatore*) malloc(sizeof(Giocatore));
-    // Associo il thread
+    //Associo il thread
     i->thread = pthread_self();
-    // Associo il nome
+    //Associo il nome
     i->nome = (char*) malloc(strlen(nome) + 1);
     strcpy(i->nome, nome);
-    // Assegno i punti (che sono 0 all'inizio della partita)
+    //Assegno i punti (che sono 0 all'inizio della partita)
     i->punti = 0;
-    // Associo il fd
+    //Associo il fd
     i->fd_client = fd;
+    //Associo il logging (che all'inizio è zero)
     i->loggato = 0;
-    // Faccio puntare alla testa della lista
+    //Faccio puntare alla testa della lista
     i->next = lista_conc->lista;
     lista_conc->lista = i;
     pthread_mutex_unlock(&lista_conc->lock);
     return;
 }
 
+//Funzione per rimuovere Giocatori
 char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente) {
     pthread_mutex_lock(&lista_conc->lock);
     char* tmpusername;
@@ -59,7 +61,7 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
         pthread_mutex_unlock(&lista_conc->lock);
         return "";
     }
-    // Controllo se il tid coincide
+    // Controllo se il nome utente coincide
     if ((*lista)->nome == nome_utente) {
         printf("Giocatore eliminato\n");
         Giocatore* temp = *lista;
@@ -70,7 +72,7 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
         pthread_mutex_unlock(&lista_conc->lock);
         return tmpusername;
     }
-    // Cerco il prossimo tid nella lista
+    // Cerco il prossimo nome utente nella lista
     Lista_Giocatori prev = *lista;
     Lista_Giocatori curr = (*lista)->next;
     while (curr != NULL) {
@@ -89,7 +91,7 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
     return "";
 }
 
-// Definisco una funzione che conta il numero di giocatori
+//Funzione per contare il numero di Giocatori
 int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc) {
     pthread_mutex_lock(&lista_conc->lock);
     Lista_Giocatori lista = lista_conc->lista;
@@ -102,7 +104,7 @@ int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc) {
     return count;
 }
 
-// Definisco una funzione per cercare Giocatori nella lista
+//Funzione per cercare un giocatore con un determinato nome utente
 int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
     pthread_mutex_lock(&lista_conc->lock);
     Lista_Giocatori lista = lista_conc->lista;
@@ -117,6 +119,7 @@ int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
     return 1;
 }
 
+//Funzione che recupera il nome utente di un giocatore
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente) {
     pthread_mutex_lock(&lista_conc->lock);
     Lista_Giocatori head = lista_conc->lista;

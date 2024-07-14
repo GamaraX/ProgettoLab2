@@ -6,6 +6,7 @@ typedef struct par {
     int punteggio;
     struct par* next;
 } Parola;
+
 //Lista Parole
 typedef Parola * Lista_Parole;
 //#todo calcola punteggio di questa struct, poi calcola punteggio utente ecc.......ricordarsi di fare sempre le deallocazioni, funzione per aggiungere una parola indovinata blabla
@@ -31,6 +32,7 @@ typedef struct {
     pthread_mutex_t lock;
 } Lista_Giocatori_Concorrente;
 
+//Definisco struttura argomenti da passare al thread
 typedef struct arg{
     int fd_client;
     pthread_t thread_id;
@@ -46,11 +48,11 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
 char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente);
 //Funzione per contare il numero di Giocatori
 int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc);
-//Funzione per cercare un nome utente
+//Funzione per cercare un giocatore con un determinato nome utente
 int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
 //Funzione che elimina la lista
 void Elimina_Lista(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione che inizializza la lista a vuota
 void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc);
-//Funzione che recupera il nome utente
+//Funzione che recupera il nome utente di un giocatore
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);

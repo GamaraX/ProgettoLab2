@@ -21,36 +21,35 @@
 #define MAX_PAROLE 279875
 #define MAX_LUNGHEZZA 100
 
-
-
+//Funzione che carica il dizionario in memoria
 int Carica_Dizionario(const char *nomeFile, char *parole[]) {
     char buffer[MAX_LUNGHEZZA];
     int conteggio = 0;
     FILE *file = fopen(nomeFile, "r");
+    //Controlla se ci sono errori nell'apertura del file
     if (!file) {
         perror("Errore nell'aprire il file");
-        return -1; // Restituisci -1 in caso di errore
+        return -1; 
     }
     
-    // Leggi le parole dal file
+    //Leggi le parole dal file
     while (fscanf(file, "%s", buffer) == 1 && conteggio < MAX_PAROLE) {
         
         parole[conteggio] = malloc(strlen(buffer) + 1);
         if (!parole[conteggio]) {
             perror("Errore di allocazione della memoria");
             fclose(file);
-            return -1; // Restituisci -1 in caso di errore
+            return -1;
         }
         strcpy(parole[conteggio], buffer);
         conteggio++;
     }
     
-
     fclose(file);
     return conteggio; // Restituisci il numero di parole caricate
 }
 
-
+//Funzione che esegue la ricerca binaria nel dizionario per cercare la parola inviata dall'utente
 int Ricerca_Binaria_Dizionario(char* parole[], int conteggio, const char *parolaDaCercare) {
     int sinistra = 0, destra = conteggio - 1;
     int trovato = 0;
@@ -73,6 +72,7 @@ int Ricerca_Binaria_Dizionario(char* parole[], int conteggio, const char *parola
     return trovato; // Restituisce 1 se trovata, 0 altrimenti
 }
 
+//Funzione che Dealloca il dizionario dalla memoria
 void Dealloca_Dizionario(char* parole[], int conteggio) {
     for(int i=0; i<conteggio; i++){
         free(parole[i]);
