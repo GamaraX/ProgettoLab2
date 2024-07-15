@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Lista.h"
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
@@ -65,6 +65,11 @@ void GestoreSigint(int signum) {
     exit(EXIT_SUCCESS);
 }
 
+//Thread Scorer
+void Thread_Scorer() {
+
+}
+
 //Definisco la funzione che gestisce le fasi della partita
 void* Argo(void* arg) {
     
@@ -83,19 +88,19 @@ void* Argo(void* arg) {
         }
         else{
             Genera_Matrix(matrice, argcast->seed);
-            //#todo qui avvisare gli utenti che la matrice è stata creata!!!!!!!!!!!!!!!!!!!!e inviala!!!!!!!!!!!!
         }
+        //Appena creata, invio la matrice a tutti i giocatori
         Stampa_Matrix(matrice);
+        //La partita comincia
         ingame = 1;
         starttime = time(NULL);
         //sleep(2);
         sleep(argcast->durata_minuti * 60);
         
+        //La partita è finita
         ingame = 0;
         starttime = time(NULL);
         //parte lo scorer
-
-        //viene incrementato l'offset
 
         ingame = 2;
         //sleep(5);

@@ -12,7 +12,7 @@
 #include <arpa/inet.h>
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Lista.h"
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"

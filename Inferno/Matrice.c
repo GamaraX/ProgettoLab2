@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include "../Purgatorio/macro.h"
-#include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Lista.h"
 #include "../Purgatorio/Matrice.h"
 
 Lettera** Crea_Matrix() {

@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include "../Purgatorio/macro.h"
 #include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/ListaClient.h"
+#include "../Purgatorio/Lista.h"
 #include "../Purgatorio/LogFun.h"
 
 //Inizializzo variabili globali

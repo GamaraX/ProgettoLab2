@@ -11,7 +11,7 @@ SORGENTE = ../Inferno/
 # Header File
 HDRS1 = $(HEADER)macro.h
 HDRS2 = $(HEADER)Protocolli.h
-HDRS3 = $(HEADER)ListaClient.h
+HDRS3 = $(HEADER)Lista.h
 HDRS4 = $(HEADER)Matrice.h
 HDRS5 = $(HEADER)Dizionario.h
 HDRS6 = $(HEADER)LogFun.h
@@ -20,7 +20,7 @@ HDRS6 = $(HEADER)LogFun.h
 SERVER = Server
 CLIENT = cliente
 PROTO = Protocolli
-LISTA = ListaClient
+LISTA = Lista
 MATRICE = Matrice
 DIZIO = Dizionario
 LOGFUN = LogFun
@@ -68,7 +68,7 @@ $(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
 #Protocolli.o
 $(OBJP): $(SRCP) $(HDRS1) $(HDRS2)
 	@$(CC) $(CFLAGS) -c $(SRCP) $(HDRS1) $(HDRS2)
-#ListaClient.o
+#Lista.o
 $(OBJL): $(SRCL) $(HDRS1) $(HDRS3)
 	@$(CC) $(CFLAGS) -c $(SRCL) $(HDRS1) $(HDRS3)
 #Matrice.o
