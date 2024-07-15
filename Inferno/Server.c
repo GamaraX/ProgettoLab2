@@ -20,7 +20,7 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
-#include "../Purgatorio/Scorer.h"
+#include "../Purgatorio/Bacheca.h"
 
 typedef struct imp {
     Lettera** matrice; //Matrice corrente
@@ -90,26 +90,43 @@ void GestoreSigint(int signum) {
     exit(EXIT_SUCCESS);
 }
 
-//Thread Scorer
-void* Thread_Scorer(void* args) {
+int Confronta_Punti(const void *a, const void *b){
+
+    Giocatore *giocatore1 = *(Giocatore **)a;
+    Giocatore *giocatore2 = *(Giocatore **)b;
+    return giocatore2->punti - giocatore1->punti;
+}
+
+// Thread Scorer
+void *Thread_Scorer(void *args){
     int numgioc;
-    while (1) {
-        numgioc = Numero_Giocatori_Loggati(lista);
-        Lista_Giocatori* giocatori_raccolti[numgioc];
-        for(int i = 0; i < numgioc; i++) {
-            pthread_mutex_lock(&scorer_mutex);
-            while(Lista_Scorer == NULL) {
-                pthread_cond_wait(&scorer_cond, &scorer_mutex);
-            }
-            Giocatore* temp = Lista_Scorer;
-            Lista_Scorer = Lista_Scorer->next;
-            giocatori_raccolti[i] = temp;
-            pthread_mutex_unlock(&scorer_mutex);
+
+    numgioc = Numero_Giocatori_Loggati(lista);
+    Lista_Giocatori giocatori_raccolti[numgioc];
+    for (int i = 0; i < numgioc; i++){
+        pthread_mutex_lock(&scorer_mutex);
+        while (Lista_Scorer == NULL){
+            pthread_cond_wait(&scorer_cond, &scorer_mutex);
         }
-        //qsort giocatori raccolti
-
-
+        Giocatore *temp = Lista_Scorer;
+        Lista_Scorer = Lista_Scorer->next;
+        giocatori_raccolti[i] = temp;
+        pthread_mutex_unlock(&scorer_mutex);
     }
+    // qsort giocatori raccolti
+    qsort(giocatori_raccolti, numgioc, sizeof(Giocatore *), Confronta_Punti);
+
+    char *classifica = malloc(1024);
+    for (int i = 0; i < numgioc; i++){
+        char *temp = malloc(128);
+        sprintf(temp, "%s;%d\n", giocatori_raccolti[i]->nome, giocatori_raccolti[i]->punti);
+        strcat(classifica, temp);
+    }
+    // invio classifica come csv a tutti i giocatori
+    for (int i = 0; i < numgioc; i++){
+        Caronte(giocatori_raccolti[i]->fd_client, classifica, MSG_PUNTI_FINALI);
+    }
+    pthread_exit(NULL);
 }
 
 //Definisco la funzione che gestisce le fasi della partita
@@ -118,6 +135,9 @@ void* Argo(void* arg) {
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
     argcast->file_matrice = filemat;
     FILE* tempfd;
+
+    // CONTEGGIO PAROLE E CARICAMENTO DIZIONARIO (SE LO RITOCCHI IO TI STERILIZZO)
+    conteggio_parole = Carica_Dizionario(argcast->file_diz, parole);
     
     //Prendo e apro il file
     if (argcast->file_matrice != NULL) {
@@ -148,7 +168,7 @@ void* Argo(void* arg) {
         pthread_mutex_unlock(&lista->lock);
         while (temp != NULL) {
             if (temp->loggato == 1) {
-                pthread_kill(&temp->thread, SIGUSR1);
+                pthread_kill(temp->thread, SIGUSR1);
             }
             temp = temp->next;
         }

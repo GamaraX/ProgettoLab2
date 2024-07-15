@@ -15,7 +15,7 @@ HDRS3 = $(HEADER)Lista.h
 HDRS4 = $(HEADER)Matrice.h
 HDRS5 = $(HEADER)Dizionario.h
 HDRS6 = $(HEADER)LogFun.h
-HDRS7 = $(HEADER)Scorer.h
+HDRS7 = $(HEADER)Bacheca.h
 
 # Eseguibili
 SERVER = Server
@@ -25,7 +25,7 @@ LISTA = Lista
 MATRICE = Matrice
 DIZIO = Dizionario
 LOGFUN = LogFun
-SCORER = Scorer
+BACHECA = Bacheca
 
 # File oggetto
 OBJS = $(SERVER).o
@@ -35,7 +35,7 @@ OBJL = $(LISTA).o
 OBJM = $(MATRICE).o
 OBJD = $(DIZIO).o
 OBJF = $(LOGFUN).o
-OBJSC = $(SCORER).o
+OBJB = $(BACHECA).o
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
@@ -45,7 +45,7 @@ SRCL = $(SORGENTE)$(LISTA).c
 SRCM = $(SORGENTE)$(MATRICE).c
 SRCD = $(SORGENTE)$(DIZIO).c
 SRCF = $(SORGENTE)$(LOGFUN).c
-SRCSC = $(SORGENTE)$(SCORER).c
+SRCB = $(SORGENTE)$(BACHECA).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
@@ -53,7 +53,7 @@ all: $(SERVER) $(CLIENT) objclear otherclean
 # Dipendenza file eseguibile
 $(SERVER): $(OBJS)
 	@echo Server
-	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJSC) -o $(SERVER)
+	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJB) -o $(SERVER)
 
 $(CLIENT): $(OBJC)
 	@echo Client
@@ -65,7 +65,7 @@ $(CLIENT): $(OBJC)
 
 # Server.o
 $(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6) $(HDRS7)
-	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(SRCF) $(SRCD) $(SRCM) $(SRCSC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6) $(HDRS7)
+	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(SRCF) $(SRCD) $(SRCM) $(SRCB) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6) $(HDRS7)
 #Client.o
 $(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
 	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCL) $(SRCP) $(SRCM) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
@@ -84,14 +84,14 @@ $(OBJD): $(SRCD) $(HDRS1) $(HDRS5)
 #LogFun.o
 $(OBJF): $(SRCF) $(HDRS1) $(HDRS6)
 	@$(CC) $(CFLAGS) -c $(SRCF) $(HDRS1) $(HDRS6)
-#Scorer.o
-$(OBJSC): $(SRCSC) $(HDRS1) $(HDRS7)
-	@$(CC) $(CFLAGS) -c $(SRCSC) $(HDRS1) $(HDRS7)
+#Bacheca.o
+$(OBJB): $(SRCB) $(HDRS1) $(HDRS7)
+	@$(CC) $(CFLAGS) -c $(SRCB) $(HDRS1) $(HDRS7)
 clean: 
 	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJD) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJSC)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJB)
 
 otherclean:
 	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDRS5).gch $(HDRS6).gch $(HDRS7).gch

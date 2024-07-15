@@ -139,7 +139,7 @@ Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* ut
 }
 
 int Cerca_Parola(Lista_Parole* lista_parole, char* parola_proposta) {
-    Lista_Parole temp = lista_parole;
+    Lista_Parole temp = *lista_parole;
     while (temp != NULL) {
         if (strcmp(temp->parola, parola_proposta) == 0) {
             return 0;
