@@ -53,30 +53,56 @@ int ingame = 0;
 char* parole[279890];
 int conteggio_parole;
 
+
+
+
+//Variabili globali per produttore consumatore scorer
 int conteggio_player;
 Lista_Giocatori Lista_Scorer;
-
 pthread_mutex_t scorer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t scorer_cond = PTHREAD_COND_INITIALIZER;
 
 //Definisco la funzione che gestisce SIGUSR1
+// Definisco la funzione che gestisce SIGUSR1
 void GestoreSigUsr1(int signum) {
     pthread_mutex_lock(&scorer_mutex);
-    Lista_Giocatori listatemp = lista->lista;
-    while (listatemp != NULL) {
-        if(listatemp->thread == pthread_self()) {
+    printf("tid: %ld\n", pthread_self());
+    fflush(0);
+
+    Lista_Giocatori head_giocatori = lista->lista;
+    while (head_giocatori != NULL) {
+        if (head_giocatori->thread == pthread_self()) {
+
+            // Copiando la testa del giocatore
+            Lista_Giocatori new_head = malloc(sizeof(Giocatore));
+            if (new_head == NULL) {
+                perror("Errore allocazione memoria");
+                pthread_mutex_unlock(&scorer_mutex);
+                return;
+            }
+
+            new_head->fd_client = head_giocatori->fd_client;
+            new_head->nome = strdup(head_giocatori->nome);
+            if (new_head->nome == NULL) {
+                perror("Errore allocazione memoria");
+                free(new_head);
+                pthread_mutex_unlock(&scorer_mutex);
+                return;
+            }
+            new_head->punti = head_giocatori->punti;
+            new_head->thread = head_giocatori->thread;
+            new_head->next = Lista_Scorer;
+            Lista_Scorer = new_head;
+            head_giocatori->punti = 0;
+            pthread_cond_signal(&scorer_cond);
             break;
         }
-        listatemp = listatemp->next;
+        head_giocatori = head_giocatori->next;
     }
-    Lista_Giocatori temp = Lista_Scorer; 
-    Lista_Scorer = listatemp;
-    Lista_Scorer->next = temp;
-    pthread_cond_signal(&scorer_cond);
+
     pthread_mutex_unlock(&scorer_mutex);
     return;    
 }
-
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
     Lista_Giocatori gioctemp = lista->lista;
@@ -156,8 +182,8 @@ void* Argo(void* arg) {
         //La partita comincia
         ingame = 1;
         starttime = time(NULL);
-        //sleep(2);
-        sleep(argcast->durata_minuti * 60);
+        sleep(20);
+        //sleep(argcast->durata_minuti * 60);
         
         //La partita è finita
         ingame = 0;
@@ -166,15 +192,14 @@ void* Argo(void* arg) {
         pthread_mutex_lock(&lista->lock);
         Giocatore* temp = lista->lista;
         pthread_mutex_unlock(&lista->lock);
+        pthread_t scorer;
+        pthread_create(&scorer, NULL, Thread_Scorer, NULL);
         while (temp != NULL) {
             if (temp->loggato == 1) {
                 pthread_kill(temp->thread, SIGUSR1);
             }
             temp = temp->next;
         }
-
-        //parte lo scorer
-
         ingame = 2;
         //sleep(5);
         sleep(60);
@@ -204,7 +229,7 @@ void* asdrubale (void* arg) {
     int tempo_partita = thread_args->tempo_partita;
 
     //Inizializzo variabili
-    Giocatore* giocatore;
+    Giocatore* giocatore = NULL;
     Msg* msg;
     int punti;
 
@@ -256,6 +281,7 @@ void* asdrubale (void* arg) {
                 //Adesso il giocatore è loggato
                 giocatore = RecuperaUtente(lista,msg->msg);
                 giocatore->loggato = 1;
+                giocatore->lista_parole = NULL;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
                 //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
                 break;
@@ -267,7 +293,6 @@ void* asdrubale (void* arg) {
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
-                //#todolater fare in modo che non venga ricaricata da file ogni volta ma cambiata da qualche handler che gestisce sto game
                 //Controllo se sono in fase di pausa o in game
                                             printf("%s\n", msg->msg);
                                             fflush(0);
@@ -311,11 +336,22 @@ void* asdrubale (void* arg) {
                     if (Cerca_Parola(giocatore->lista_parole, msg->msg) == 0) {
                         punti = 0;
                     }
+                    if (punti != 0) {
+                        Parola* par = (Parola*)malloc(sizeof(Parola));
+                        par->parola = malloc(sizeof(char)*strlen(msg->msg)+1);
+                        printf("ciao\n");
+                        fflush(0);
+                        strcpy(par->parola,msg->msg);
+                        printf("%s", par->parola);
+                        fflush(0);
+                        par->next = giocatore->lista_parole;
+                        giocatore->lista_parole = par; 
+                    }
 
                     ScriviLog(giocatore->nome, "Immissione", msg->msg);
                     giocatore->punti += punti;
                     char spunti[3];
-                    snprintf(spunti, 3, "%d", punti);
+                    sprintf(spunti, "%d", punti);
                     Caronte(fd_client, spunti, MSG_PUNTI_PAROLA);
                     break;
                 }
@@ -360,10 +396,13 @@ void* asdrubale (void* arg) {
                 fflush(0);
                 break;
             case MSG_POST_BACHECA:
-                
+                inserisci_messaggio(msg->msg, giocatore->nome);
+                Caronte(fd_client, "Messaggio inviato in bacheca!", MSG_OK);
                 break;
             case MSG_SHOW_BACHECA:
-
+                int messaggi_inseriti;
+                Messaggio* messaggi = leggi_messaggi(&messaggi_inseriti);
+                
                 break;
             //Aggiungere altri casi
             default:

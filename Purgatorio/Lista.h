@@ -18,7 +18,7 @@ typedef struct gio {
     int fd_client;
     int loggato;
     //#todo ListaParole è una lista linkata che oltre al next (per scorrerla) ha due campi valore, uno char* per la parole e uno int per il punteggio guadagnato da quella parola
-    Lista_Parole* lista_parole;
+    Lista_Parole lista_parole;
     struct gio* next;
 }Giocatore;
 
@@ -56,4 +56,4 @@ void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione che recupera il nome utente di un giocatore
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
 //Funzione che cerca le parole nella lista delle parole dell'utente
-int Cerca_Parola(Lista_Parole* lista_parole, char* parola_proposta);
+int Cerca_Parola(Lista_Parole lista_parole, char* parola_proposta);

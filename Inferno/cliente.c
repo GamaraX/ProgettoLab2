@@ -47,10 +47,16 @@ void* receiver(void* args) {
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s\n", received_msg->msg);
                 fflush(0);
+                //leggo il messaggio di input che l'utente scrive al client
+                printf("%s", "[PROMPT PAROLIERE]-->");
+                fflush(0);
                 break;
             case MSG_ERR:
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s\n", received_msg->msg);
+                fflush(0);
+                //leggo il messaggio di input che l'utente scrive al client
+                printf("%s", "[PROMPT PAROLIERE]-->");
                 fflush(0);
                 break;
 
@@ -69,13 +75,31 @@ void* receiver(void* args) {
                 break;
             case MSG_PUNTI_PAROLA:
                 pthread_mutex_unlock(&messaggio_mutex);
-                printf("hai totalizzato %s punti!", received_msg->msg);
+                printf("hai totalizzato %s punti!\n", received_msg->msg);
+                fflush(0);
+                //leggo il messaggio di input che l'utente scrive al client
+                printf("%s", "[PROMPT PAROLIERE]-->");
                 fflush(0);
                 break;
             case MSG_TEMPO_PARTITA:
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s rimanenti\n", received_msg->msg);
                 fflush(0);
+                //leggo il messaggio di input che l'utente scrive al client
+                printf("%s", "[PROMPT PAROLIERE]-->");
+                fflush(0);
+                break;
+            case MSG_PUNTI_FINALI:
+                pthread_mutex_unlock(&messaggio_mutex);
+                //printare la classifica king dai dai dai daaaaai
+                printf("\nClassifica generale:\n");
+                fflush(0);
+                printf("%s\n", received_msg->msg);
+                fflush(0);
+                //leggo il messaggio di input che l'utente scrive al client
+                printf("%s", "[PROMPT PAROLIERE]-->");
+                fflush(0);
+
                 break;
             default:
                 pthread_mutex_unlock(&messaggio_mutex);
@@ -154,6 +178,10 @@ int main(int argc, char* argv[]) {
     pthread_create(&receiver_thread, NULL, receiver, NULL);
 
 
+    //leggo il messaggio di input che l'utente scrive al client
+    printf("[PROMPT PAROLIERE]-->");
+    fflush(0);
+
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
@@ -162,10 +190,7 @@ int main(int argc, char* argv[]) {
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(134*sizeof(char));
 
-        //leggo il messaggio di input che l'utente scrive al client
-        printf("%s", "[PROMPT PAROLIERE]-->");
-        fflush(0);
-
+        
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
         //Messaggio di aiuto
         if(strcmp(cmz, "aiuto\n") == 0) {
