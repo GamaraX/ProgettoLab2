@@ -74,7 +74,6 @@ void Thread_Scorer() {
 void* Argo(void* arg) {
     
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
-    int offset = 0;
     argcast->file_matrice = filemat;
     FILE* tempfd;
     //Prendo e apro il file
@@ -336,17 +335,17 @@ int main (int argc, char* argv[]) {
                 settings->file_matrice = optarg;
                 break;
             case OPT_DURATA:
-                settings->durata_minuti = optarg;
+                settings->durata_minuti = atoi(optarg);
                 break;
             case OPT_DIZ:
                 settings->file_diz = optarg;
                 break;
             case OPT_SEED:
-                settings->seed = optarg;
+                settings->seed = atoi(optarg);
                 seed_ricevuto = 1;
                 break;
             case OPT_DISCONNECT:
-                settings->tempo_disconnessione = optarg;
+                settings->tempo_disconnessione = atoi(optarg);
                 break;
             case '?':
                 printf("Argomento aggiuntivo\n");
@@ -358,7 +357,7 @@ int main (int argc, char* argv[]) {
             exit(EXIT_SUCCESS);
         }
         srand(settings->seed);
-        return;
+        return 0;
     }
 
     //Struct sigaction

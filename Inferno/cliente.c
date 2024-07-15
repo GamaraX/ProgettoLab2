@@ -32,7 +32,7 @@ void GestoreSigint(int signum) {
 }
 
 
-void receiver(void* args) {
+void* receiver(void* args) {
     //Creo un variabile che memorizza il messaggio di ritorno dal server
     Msg* received_msg;
 
