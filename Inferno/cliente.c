@@ -29,6 +29,7 @@ void GestoreSigint(int signum) {
     int retvalue;
     Caronte(fd_server, "Chiusura Client tramite SIGINT", MSG_FINE);
     SYSC(retvalue, close(fd_server), "Errore nella close Client");
+    exit(EXIT_SUCCESS);
 }
 
 
@@ -216,9 +217,6 @@ int main(int argc, char* argv[]) {
         //Messaggio per proporre una parola al server
         if (strcmp(token, "p") == 0) {
             token = strtok(NULL, "\n");
-            for (int i = 0; token[i] != '\n'; i++) {
-                token[i] = toupper(token[i]);
-            }
             Caronte(fd_server, token, MSG_PAROLA);
             free(cmz);
             continue;

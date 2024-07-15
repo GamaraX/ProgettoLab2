@@ -53,6 +53,30 @@ int ingame = 0;
 char* parole[279890];
 int conteggio_parole;
 
+int conteggio_player;
+Lista_Giocatori Lista_Scorer;
+
+pthread_mutex_t scorer_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t scorer_cond = PTHREAD_COND_INITIALIZER;
+
+//Definisco la funzione che gestisce SIGUSR1
+void GestoreSigUsr1(int signum) {
+    pthread_mutex_lock(&scorer_mutex);
+    Lista_Giocatori listatemp = lista->lista;
+    while (listatemp != NULL) {
+        if(listatemp->thread == pthread_self()) {
+            break;
+        }
+        listatemp = listatemp->next;
+    }
+    Lista_Giocatori temp = Lista_Scorer; 
+    Lista_Scorer = listatemp;
+    Lista_Scorer->next = temp;
+    pthread_cond_signal(&scorer_cond);
+    pthread_mutex_unlock(&scorer_mutex);
+    return;    
+}
+
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
     Lista_Giocatori gioctemp = lista->lista;
@@ -67,8 +91,25 @@ void GestoreSigint(int signum) {
 }
 
 //Thread Scorer
-void Thread_Scorer() {
+void* Thread_Scorer(void* args) {
+    int numgioc;
+    while (1) {
+        numgioc = Numero_Giocatori_Loggati(lista);
+        Lista_Giocatori* giocatori_raccolti[numgioc];
+        for(int i = 0; i < numgioc; i++) {
+            pthread_mutex_lock(&scorer_mutex);
+            while(Lista_Scorer == NULL) {
+                pthread_cond_wait(&scorer_cond, &scorer_mutex);
+            }
+            Giocatore* temp = Lista_Scorer;
+            Lista_Scorer = Lista_Scorer->next;
+            giocatori_raccolti[i] = temp;
+            pthread_mutex_unlock(&scorer_mutex);
+        }
+        //qsort giocatori raccolti
 
+
+    }
 }
 
 //Definisco la funzione che gestisce le fasi della partita
@@ -77,6 +118,7 @@ void* Argo(void* arg) {
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
     argcast->file_matrice = filemat;
     FILE* tempfd;
+    
     //Prendo e apro il file
     if (argcast->file_matrice != NULL) {
         tempfd = fopen(argcast->file_matrice,"r");
@@ -100,6 +142,17 @@ void* Argo(void* arg) {
         //La partita è finita
         ingame = 0;
         starttime = time(NULL);
+        //Controllo quanti player loggati ci sono quando 
+        pthread_mutex_lock(&lista->lock);
+        Giocatore* temp = lista->lista;
+        pthread_mutex_unlock(&lista->lock);
+        while (temp != NULL) {
+            if (temp->loggato == 1) {
+                pthread_kill(&temp->thread, SIGUSR1);
+            }
+            temp = temp->next;
+        }
+
         //parte lo scorer
 
         ingame = 2;
@@ -111,22 +164,30 @@ void* Argo(void* arg) {
 
 void* asdrubale (void* arg) {
 
-    //
+    //Struct sigaction
+    struct sigaction sau;
+    sau.sa_handler = GestoreSigUsr1;
+    sau.sa_flags = SA_RESTART;
+    sigemptyset(&sau.sa_mask);
+    sau.sa_handler = GestoreSigUsr1; //temporaneo
 
-    int retvalue;
+    //Associo il GestoreSigUsr1 al segnale di SIGUSR1
+    sigaction(SIGUSR1, &sau, NULL);
+
     //#todo variabile per timestamp ultimo comando  
     //#todo starta un thread e passa quel timestamp come puntatore, passa anche giocatore, e quando stacchi, ricordati di controllare se per caso si e` loggato, nel caso setta loggato=0
     
     //Recupero i dati del thread
     ThreadArgs* thread_args = (ThreadArgs*) arg;
     int fd_client = thread_args->fd_client;
-    pthread_t thread_id = thread_args->thread_id;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
 
     //Inizializzo variabili
     Giocatore* giocatore;
     Msg* msg;
+    int punti;
+
     //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
 
@@ -213,11 +274,13 @@ void* asdrubale (void* arg) {
                 Caronte(fd_client, tempo(tempo_partita), MSG_TEMPO_PARTITA);
                 break;
             case MSG_PAROLA:
-                int punti = 0;
                 if (giocatore == NULL) {
                     Caronte(fd_client, "Errore, non puoi inviare parole, non sei loggato", MSG_ERR);
                     break;
                 }
+                punti = 0;
+                //printf("%d\n", Controlla_Parola_Matrice(matrice, msg->msg));
+                //printf("%d\n",Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg));
                 if (Controlla_Parola_Matrice(matrice, msg->msg) == 1 && Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg) == 1) {
                     if(strstr(msg->msg, "QU") != NULL) {
                         punti = strlen(msg->msg)-1;
@@ -225,8 +288,15 @@ void* asdrubale (void* arg) {
                     else {
                         punti = strlen(msg->msg);
                     }
+                    if (Cerca_Parola(giocatore->lista_parole, msg->msg) == 0) {
+                        punti = 0;
+                    }
+
                     ScriviLog(giocatore->nome, "Immissione", msg->msg);
-                    Caronte(fd_client, punti, MSG_PUNTI_PAROLA);
+                    giocatore->punti += punti;
+                    char spunti[3];
+                    snprintf(spunti, 3, "%d", punti);
+                    Caronte(fd_client, spunti, MSG_PUNTI_PAROLA);
                     break;
                 }
                 Caronte(fd_client, "Parola non valida", MSG_ERR);
@@ -317,7 +387,7 @@ int main (int argc, char* argv[]) {
         {"seed", required_argument, 0, OPT_SEED},
         {"diz", required_argument, 0, OPT_DIZ},
         {"disconnetti", required_argument, 0, OPT_DISCONNECT},
-        {0, 0, 0, 0, 0}
+        {0, 0, 0, 0}
     };
 
     Impostazioni_Gioco* settings = malloc(sizeof(Impostazioni_Gioco));
@@ -430,7 +500,6 @@ int main (int argc, char* argv[]) {
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
         //Inizializza ThreadArgs
         thread_args->fd_client = fdtemp;
-        thread_args->thread_id = tidtemp;
         thread_args->lista = lista;
         SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, thread_args), "Errore pthread create collegato client");
     }

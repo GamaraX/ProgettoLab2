@@ -50,16 +50,19 @@ int Carica_Dizionario(const char *nomeFile, char *parole[]) {
 }
 
 //Funzione che esegue la ricerca binaria nel dizionario per cercare la parola inviata dall'utente
-int Ricerca_Binaria_Dizionario(char* parole[], int conteggio, const char *parolaDaCercare) {
+int Ricerca_Binaria_Dizionario(char* parole[], int conteggio, char *parolaDaCercare) {
+    char* tempparola = malloc(sizeof(char)* strlen(parolaDaCercare));
+    strcpy(tempparola, parolaDaCercare);
+    for (int i = 0; i < strlen(parolaDaCercare)-1; i++) {
+        tempparola[i] = tolower(parolaDaCercare[i]);
+    }
     int sinistra = 0, destra = conteggio - 1;
     int trovato = 0;
-
     while (sinistra <= destra) {
         int centro = (sinistra + destra) / 2;
         
-        int confronto = strcmp(parole[centro], parolaDaCercare);
-        
-        if (confronto == 0) {
+        int confronto = strcmp(parole[centro], tempparola);
+        if (confronto == 0) {   
             trovato = 1; // Parola trovata
             break; // Esci dal ciclo se trovata
         } else if (confronto < 0) {

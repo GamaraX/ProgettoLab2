@@ -89,19 +89,24 @@ void Genera_Matrix(Lettera** matrice, int seed) {
 
 int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     // Cerco nella matrice la lettera pos-esima della parola dell'utente
+    char* temppparola = malloc((strlen(parola_utente)+1)*sizeof(char));
+    strcpy(temppparola, parola_utente);
+    for (int i = 0; i < strlen(parola_utente)-1 ; i++) {
+        temppparola[i] = toupper(parola_utente[i]);
+    }
     char lettiniz[3];
-    if (parola_utente[0] == 'Q') {
+    if (temppparola[0] == 'Q') {
         strcpy(lettiniz, "QU");
     }
     else {
-        lettiniz[0] = parola_utente[0];
+        lettiniz[0] = temppparola[0];
         lettiniz[1] = '\0';
     }
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 // Uso strcmp per confrontare le stringhe
                 if (strcmp(matrice[i][j].lettera, lettiniz) == 0) {
-                    if (DFS_Matrix(matrice, parola_utente, 0, i, j) == 1) {
+                    if (DFS_Matrix(matrice, temppparola, 0, i, j) == 1) {
                         return 1;
                     }
                 }
@@ -128,8 +133,6 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     if (pos + strlen(lett) >= strlen(parola_utente))
         return 1;
 
-    printf("Controllo matrice[%d][%d]: %s con %s\n", riga, colonna, matrice[riga][colonna].lettera, lett);
-    fflush(0);
     // Controllo se la lettera pos-esima della parola utente è presente nella matrice, oppure se l'elemento della matrice è già stato visitato o meno
     if (strcmp(matrice[riga][colonna].lettera, lett) != 0 || matrice[riga][colonna].visitato) {
         free(lett);

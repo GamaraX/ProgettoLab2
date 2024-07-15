@@ -92,13 +92,15 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
 }
 
 //Funzione per contare il numero di Giocatori
-int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc) {
+int Numero_Giocatori_Loggati(Lista_Giocatori_Concorrente* lista_conc) {
     pthread_mutex_lock(&lista_conc->lock);
     Lista_Giocatori lista = lista_conc->lista;
     int count = 0;
     while (lista != NULL) {
-        count++;
-        lista = lista->next;
+        if(lista->loggato == 1) {
+            count++;
+            lista = lista->next;
+        }
     }
     pthread_mutex_unlock(&lista_conc->lock);
     return count;
@@ -134,4 +136,15 @@ Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* ut
     lista_conc->lista = head;
     pthread_mutex_unlock(&lista_conc->lock);
     return NULL;
+}
+
+int Cerca_Parola(Lista_Parole* lista_parole, char* parola_proposta) {
+    Lista_Parole temp = lista_parole;
+    while (temp != NULL) {
+        if (strcmp(temp->parola, parola_proposta) == 0) {
+            return 0;
+        }
+        temp = temp->next;
+    }
+    return 1;
 }

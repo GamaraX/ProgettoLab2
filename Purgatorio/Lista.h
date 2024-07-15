@@ -3,7 +3,6 @@
 //Creazione nodo Parola
 typedef struct par {
     char* parola;
-    int punteggio;
     struct par* next;
 } Parola;
 
@@ -35,7 +34,6 @@ typedef struct {
 //Definisco struttura argomenti da passare al thread
 typedef struct arg{
     int fd_client;
-    pthread_t thread_id;
     Lista_Giocatori_Concorrente* lista;
     char* file_diz;
     int tempo_partita;
@@ -48,7 +46,7 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
 //Funzione per rimuovere Giocatori
 char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente);
 //Funzione per contare il numero di Giocatori
-int Numero_Giocatori(Lista_Giocatori_Concorrente* lista_conc);
+int Numero_Giocatori_Loggati(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione per cercare un giocatore con un determinato nome utente
 int CercaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
 //Funzione che elimina la lista
@@ -57,3 +55,5 @@ void Elimina_Lista(Lista_Giocatori_Concorrente* lista_conc);
 void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione che recupera il nome utente di un giocatore
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
+//Funzione che cerca le parole nella lista delle parole dell'utente
+int Cerca_Parola(Lista_Parole* lista_parole, char* parola_proposta);
