@@ -15,6 +15,7 @@ HDRS3 = $(HEADER)Lista.h
 HDRS4 = $(HEADER)Matrice.h
 HDRS5 = $(HEADER)Dizionario.h
 HDRS6 = $(HEADER)LogFun.h
+HDRS7 = $(HEADER)Scorer.h
 
 # Eseguibili
 SERVER = Server
@@ -24,6 +25,7 @@ LISTA = Lista
 MATRICE = Matrice
 DIZIO = Dizionario
 LOGFUN = LogFun
+SCORER = Scorer
 
 # File oggetto
 OBJS = $(SERVER).o
@@ -33,6 +35,7 @@ OBJL = $(LISTA).o
 OBJM = $(MATRICE).o
 OBJD = $(DIZIO).o
 OBJF = $(LOGFUN).o
+OBJSC = $(SCORER).o
 
 # File Sorgente
 SRCS = $(SORGENTE)$(SERVER).c
@@ -42,6 +45,7 @@ SRCL = $(SORGENTE)$(LISTA).c
 SRCM = $(SORGENTE)$(MATRICE).c
 SRCD = $(SORGENTE)$(DIZIO).c
 SRCF = $(SORGENTE)$(LOGFUN).c
+SRCSC = $(SORGENTE)$(SCORER).c
 
 # Target
 all: $(SERVER) $(CLIENT) objclear otherclean
@@ -49,7 +53,7 @@ all: $(SERVER) $(CLIENT) objclear otherclean
 # Dipendenza file eseguibile
 $(SERVER): $(OBJS)
 	@echo Server
-	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) -o $(SERVER)
+	@$(CC) $(CFLAGS) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJSC) -o $(SERVER)
 
 $(CLIENT): $(OBJC)
 	@echo Client
@@ -60,8 +64,8 @@ $(CLIENT): $(OBJC)
 # Dipendenza file oggetto
 
 # Server.o
-$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6)
-	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(SRCF) $(SRCD) $(SRCM) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6)
+$(OBJS): $(SRCS) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6) $(HDRS7)
+	@$(CC) $(CFLAGS) -c $(SRCS) $(SRCL) $(SRCP) $(SRCF) $(SRCD) $(SRCM) $(SRCSC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4) $(HDRS5) $(HDRS6) $(HDRS7)
 #Client.o
 $(OBJC): $(SRCC) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
 	@$(CC) $(CFLAGS) -c $(SRCC) $(SRCL) $(SRCP) $(SRCM) $(HDRS1) $(HDRS2) $(HDRS3) $(HDRS4)
@@ -80,7 +84,9 @@ $(OBJD): $(SRCD) $(HDRS1) $(HDRS5)
 #LogFun.o
 $(OBJF): $(SRCF) $(HDRS1) $(HDRS6)
 	@$(CC) $(CFLAGS) -c $(SRCF) $(HDRS1) $(HDRS6)
-
+#Scorer.o
+$(OBJSC): $(SRCSC) $(HDRS1) $(HDRS7)
+	@$(CC) $(CFLAGS) -c $(SRCSC) $(HDRS1) $(HDRS7)
 clean: 
 	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJD) $(SERVER) $(CLIENT)
 
