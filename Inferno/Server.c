@@ -20,6 +20,7 @@
 #include "../Purgatorio/Matrice.h"
 #include "../Purgatorio/LogFun.h"
 #include "../Purgatorio/Dizionario.h"
+#include "../Purgatorio/Scorer.h"
 
 typedef struct imp {
     Lettera** matrice; //Matrice corrente

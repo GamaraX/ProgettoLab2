@@ -91,10 +91,10 @@ clean:
 	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJD) $(SERVER) $(CLIENT)
 
 objclear: 
-	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD)
+	@rm -f $(OBJC) $(OBJS) $(OBJP) $(OBJL) $(OBJM) $(OBJF) $(OBJD) $(OBJSC)
 
 otherclean:
-	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDRS5).gch $(HDRS6).gch
+	@rm -f $(HDRS1).gch $(HDRS2).gch $(HDRS3).gch $(HDRS4).gch $(HDRS5).gch $(HDRS6).gch $(HDRS7).gch
 
 run:
 	@./$(SERVER) 127.0.0.1 2000
