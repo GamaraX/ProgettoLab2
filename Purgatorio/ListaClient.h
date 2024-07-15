@@ -38,6 +38,7 @@ typedef struct arg{
     pthread_t thread_id;
     Lista_Giocatori_Concorrente* lista;
     char* file_diz;
+    int tempo_partita;
 } ThreadArgs;
 
 //Funzione che permette al client di giocare

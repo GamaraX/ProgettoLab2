@@ -40,33 +40,46 @@ void receiver(void* args) {
         //Memorizzo il messaggio di ritorno dal server e il tipo
         received_msg = Ade(fd_server);
         char type = (char)*received_msg->type;
-        pthread_mutex_unlock(&messaggio_mutex);
         //Switch sul tipo di ritorno
         switch(type){
             case MSG_OK:
+                pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s\n", received_msg->msg);
                 fflush(0);
                 break;
             case MSG_ERR:
+                pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s\n", received_msg->msg);
                 fflush(0);
                 break;
 
             case MSG_FINE:
+                pthread_mutex_unlock(&messaggio_mutex);
                 exit(EXIT_SUCCESS);
 
             case MSG_MATRICE:
                 //Viene allocata la matrice, caricata tramite il messaggio di ritorno dal server e stampata
                 matrice = Crea_Matrix();
                 Carica_Matrix_Stringa(matrice, received_msg->msg);
+                printf("\n");
+                fflush(0);
                 Stampa_Matrix(matrice);
                 //fare free matrice
                 break;
             case MSG_PUNTI_PAROLA:
+                pthread_mutex_unlock(&messaggio_mutex);
                 printf("hai totalizzato %s punti!", received_msg->msg);
+                fflush(0);
                 break;
-
+            case MSG_TEMPO_PARTITA:
+                pthread_mutex_unlock(&messaggio_mutex);
+                printf("%s rimanenti\n", received_msg->msg);
+                fflush(0);
+                break;
             default:
+                pthread_mutex_unlock(&messaggio_mutex);
+                printf("%s\n", received_msg->msg);
+                fflush(0);
                 break;
         }
 
@@ -102,7 +115,7 @@ int main(int argc, char* argv[]) {
     //Struct sigaction
     struct sigaction sa;
     sa.sa_handler = GestoreSigint;
-    sa.sa_flags = 0;
+    sa.sa_flags = SA_RESTART;
     sigemptyset(&sa.sa_mask);
     //Associo il GestoreSigint al segnale di SIGINT
     sigaction(SIGINT, &sa, NULL);

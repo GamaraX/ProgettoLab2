@@ -22,13 +22,13 @@
 #include "../Purgatorio/Dizionario.h"
 
 typedef struct imp {
-    Lettera** matrice;
-    int Tempo_di_Gioco;
-    char* file_matrice;
-    int durata_minuti;
-    int seed;
-    char* file_diz;
-    int tempo_disconnessione;
+    Lettera** matrice; //Matrice corrente
+    int Tempo_di_Gioco; //Timestamp dell'ultimo comando inviato dal client
+    char* file_matrice; //File matrice usata
+    int durata_minuti; //Durata partita
+    int seed;   //Seed usato
+    char* file_diz;  //File dizionario
+    int tempo_disconnessione; //tempo di disconnessione oltre il quale disconnetto il client
 }Impostazioni_Gioco;
 
 enum {
@@ -39,8 +39,11 @@ enum {
     OPT_DISCONNECT,
 };
 
+char* tempo(int max_dur);
+
 //#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
+time_t starttime;
 char* filemat= "../Paradiso/matrici_disponibili.txt";
 char* filediz = "../Paradiso/dictionary_ita.txt";
 Lettera** matrice;
@@ -84,17 +87,19 @@ void* Argo(void* arg) {
         }
         Stampa_Matrix(matrice);
         ingame = 1;
-
-        sleep(2);
-        //sleep(argcast->durata_minuti * 60);
+        starttime = time(NULL);
+        //sleep(2);
+        sleep(argcast->durata_minuti * 60);
         
         ingame = 0;
+        starttime = time(NULL);
         //parte lo scorer
 
         //viene incrementato l'offset
 
         ingame = 2;
-        sleep(5);
+        //sleep(5);
+        sleep(60);
     }
     return NULL;
 }
@@ -112,6 +117,8 @@ void* asdrubale (void* arg) {
     int fd_client = thread_args->fd_client;
     pthread_t thread_id = thread_args->thread_id;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
+    int tempo_partita = thread_args->tempo_partita;
+
     //Inizializzo variabili
     Giocatore* giocatore;
     Msg* msg;
@@ -183,8 +190,13 @@ void* asdrubale (void* arg) {
                     Caronte(fd_client, "Errore, devi registrarti per visualizzare la matrice", MSG_ERR);
                     break;
                 }
+                
+                if(ingame == 0) {
+                    Caronte(fd_client, tempo(60), MSG_TEMPO_ATTESA);
+                    break;
+                }
                 //Se non sono in fase di pausa, invio la matrice
-                char* stringa_matrice[64];
+                char* stringa_matrice = malloc(sizeof(char)*64);
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
                         strcat(stringa_matrice, matrice[i][j].lettera);
@@ -192,9 +204,8 @@ void* asdrubale (void* arg) {
                     }
                 }
                 Caronte(fd_client, stringa_matrice, MSG_MATRICE);
-                //TEMPORANEO POI DEVO INVIARE ANCHE IL TEMPO
-
-                //Caronte(fd_client, "Questo è il tempo restante", MSG_TEMPO_PARTITA);
+                free(stringa_matrice);
+                Caronte(fd_client, tempo(tempo_partita), MSG_TEMPO_PARTITA);
                 break;
             case MSG_PAROLA:
                 int punti = 0;
@@ -408,6 +419,8 @@ int main (int argc, char* argv[]) {
         //Alloco spazio per i parametri del thread
         ThreadArgs* thread_args = malloc(sizeof(ThreadArgs));
         thread_args->file_diz = settings->file_diz;
+        thread_args->tempo_partita = settings->durata_minuti*60;
+
                 
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
         //Inizializza ThreadArgs
@@ -420,3 +433,20 @@ int main (int argc, char* argv[]) {
     return 0;
 }
 
+//FUNZIONE CHE CALCOLA IL TEMPO RESTANTE
+char* tempo(int max_dur){
+    time_t end_time;
+    //MEMORIZZA IL TEMPO ATTUALE
+    time(&end_time);
+    //CALCOLA LA DIFFERENZA TRA GLI ISTANTI DI TEMPO
+    double elapsed = difftime(end_time, starttime);
+    printf("%f\n", elapsed);
+    fflush(0);
+    //CALCOLA QUANTO TEMPO RIMANE
+    double remaining = max_dur - elapsed; //
+    char* mess = malloc(256);
+    //PREPARA UN MESSAGGIO CON DENTRO I SECONDI RIMANENTI
+    sprintf(mess,"%.0f secondi",remaining);
+    //E LO RITORNA
+    return mess;
+}
