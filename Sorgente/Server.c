@@ -156,7 +156,7 @@ void *Thread_Scorer(void *args){
 }
 
 //Definisco la funzione che gestisce le fasi della partita
-void* Argo(void* arg) {
+void* Fasi_Partita(void* arg) {
     
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
     argcast->file_matrice = filemat;
@@ -206,7 +206,8 @@ void* Argo(void* arg) {
     return NULL;
 }
 
-void* asdrubale (void* arg) {
+//Thread che gestisce ogni client
+void* Client_Handler (void* arg) {
 
     //Struct sigaction
     struct sigaction sau;
@@ -532,7 +533,7 @@ int main (int argc, char* argv[]) {
     int fd_server, porta_server = atoi(argv[2]), retvalue;
     
     //Creo il thread che gestisce le fasi della partita
-    pthread_t Cerbero;
+    pthread_t t_fasi_partita;
 
     //salvo il nome del server
     char* nome_server = argv[1];
@@ -552,10 +553,10 @@ int main (int argc, char* argv[]) {
     //siamo in ricevimento di altri procesi/client
     SYSC(retvalue, listen(fd_server, 32), "Errore listen server");
 
-    //Creazione Cerbero -> ricordarsi/capire cosa fa
-    SYST(retvalue, pthread_create(&Cerbero, NULL, Argo, settings), "Errore creazione Cerbero");
+    //Creazione Thread che gestisce le fasi della partita
+    SYST(retvalue, pthread_create(&t_fasi_partita, NULL, Fasi_Partita, settings), "Errore creazione t_fasi_partita");
 
-    //creo ed associo un thread per ogni client che si connette al server, ogni client applica la funzione asdrubale
+    //Creo ed associo un thread per ogni client che si connette al server, ogni client applica la funzione Client_Handler
     while(1) {
         int fdtemp;
         pthread_t tidtemp;
@@ -569,7 +570,7 @@ int main (int argc, char* argv[]) {
         //Inizializza ThreadArgs
         thread_args->fd_client = fdtemp;
         thread_args->lista = lista;
-        SYST(retvalue, pthread_create(&tidtemp, NULL, asdrubale, thread_args), "Errore pthread create collegato client");
+        SYST(retvalue, pthread_create(&tidtemp, NULL, Client_Handler, thread_args), "Errore pthread create collegato client");
     }
 
     return 0;
