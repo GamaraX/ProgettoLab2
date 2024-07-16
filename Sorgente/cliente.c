@@ -163,8 +163,6 @@ int main(int argc, char* argv[]) {
     pthread_t receiver_thread;
     pthread_create(&receiver_thread, NULL, receiver, NULL);
 
-
-
     //ricevo i messaggi che l'utente invia come input al client, che poi comunicherà al server
     while(1) {
         ssize_t nread;
@@ -191,7 +189,6 @@ int main(int argc, char* argv[]) {
             close(fd_server);
             free(cmz);
             exit(EXIT_SUCCESS);
-            return 0;
         }
         //Messaggio per richiedere la matrice corrente
         if (strcmp(cmz, "matrice\n") == 0) {
@@ -217,14 +214,26 @@ int main(int argc, char* argv[]) {
         ///Messaggio per registrare un giocatore
         if (strcmp(token, "registra_utente") == 0) {
             token = strtok(NULL, "\n");
+            if (token == NULL) {
+                printf("Nome utente non valido\n");
+                fflush(0);
+                pthread_mutex_unlock(&messaggio_mutex);
+                continue;
+            }
             //printf("return 0\n");         DEBUGG
-            Caronte(fd_server, token,MSG_REGISTRA_UTENTE);
+            Caronte(fd_server, token, MSG_REGISTRA_UTENTE);
             free(cmz);
             continue;
         }
         //Messaggio per loggare un giocatore già registrato
         if(strcmp(token, "login_utente") == 0) {
             token = strtok(NULL, "\n");
+            if (token == NULL) {
+                printf("Nome utente non valido\n");
+                fflush(0);
+                pthread_mutex_unlock(&messaggio_mutex);
+                continue;
+            }
             Caronte(fd_server, token,MSG_LOGIN_UTENTE);
             free(cmz);
             continue;
@@ -232,24 +241,35 @@ int main(int argc, char* argv[]) {
         //Messaggio per proporre una parola al server
         if (strcmp(token, "p") == 0) {
             token = strtok(NULL, "\n");
+            if (token == NULL) {
+                printf("Parola non valida\n");
+                fflush(0);
+                pthread_mutex_unlock(&messaggio_mutex);
+                continue;
+            }
             Caronte(fd_server, token, MSG_PAROLA);
             free(cmz);
             continue;
         }
         if (strcmp(token,"msg") == 0){
             token = strtok(NULL,"\n");
+            if (token == NULL) {
+                printf("Messaggio non valido\n");
+                fflush(0);
+                pthread_mutex_unlock(&messaggio_mutex);
+                continue;
+            }
             Caronte(fd_server,token,MSG_POST_BACHECA);
             free(cmz);
             continue;
         }
         //Qualsiasi altro tipo di comando non presente in quelli soprastanti
-         Caronte(fd_server, "Comando non disponibile", MSG_ERR);
-         fflush(0);
-         free(cmz);
+        printf("Comando non disponibile\n");
+        fflush(0);
+        pthread_mutex_unlock(&messaggio_mutex);
+        free(cmz);
 
     }
     
-
-
 }
 
