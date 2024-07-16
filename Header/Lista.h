@@ -1,5 +1,14 @@
 #include <pthread.h>
 
+//Creazione nodo fd_client
+typedef struct fd {
+    int fd_client;
+    struct fd* next;
+}FDCLIENT;
+
+//Lista fd_client
+typedef FDCLIENT * Lista_FDCLIENT;
+
 //Creazione nodo Parola
 typedef struct par {
     char* parola;

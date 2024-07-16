@@ -52,6 +52,7 @@ Lista_Giocatori_Concorrente* lista;
 int ingame = 0;
 char* parole[279890];
 int conteggio_parole;
+Lista_FDCLIENT lista_fd;
 
 
 
@@ -116,6 +117,42 @@ void GestoreSigint(int signum) {
     exit(EXIT_SUCCESS);
 }
 
+//thread per la disconnessione
+typedef struct timeout_thread{
+    int pthread_id_father;
+    int fd;
+    int* last_command_timestamp;
+    int required_inactivity;
+}TimeoutThreadArgs;
+
+void* The_Bonker(void* args){
+    TimeoutThreadArgs* casted_args = (TimeoutThreadArgs*)args;
+    while(1){
+       sleep(casted_args->required_inactivity);
+        if(time(NULL) - *casted_args->last_command_timestamp > casted_args->required_inactivity){
+            //in questo caso l'utente non ha effettuato comandi per più del tempo richiesto per la disconnessione
+            //quindi lo disconnetto
+           
+            //chiudo l'fd qui ma prima devo capire se per caso è connesso e sloggarlo (loggato=1)
+            pthread_mutex_lock(&lista->lock);
+            Lista_Giocatori temp = lista->lista;
+            while(temp != NULL){
+                if(temp->fd_client == casted_args->fd && temp->loggato){
+                    //l'abbiamo trovato!
+                    temp->loggato = 0;
+                }
+                temp = temp->next;
+            }
+            pthread_mutex_unlock(&lista->lock);
+            //close(casted_args->fd); //#fare come si deve la syscall, matteo sicuramente si ricorda meglio
+            Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
+            kill(casted_args->pthread_id_father, SIGTERM); //qui termino l'handler del client perché non è più necessario!
+
+        }
+    }
+}
+
+
 int Confronta_Punti(const void *a, const void *b){
 
     Giocatore *giocatore1 = *(Giocatore **)a;
@@ -177,7 +214,20 @@ void* Fasi_Partita(void* arg) {
         else{
             Genera_Matrix(matrice, argcast->seed);
         }
+        char* stringa_matrice = malloc(sizeof(char)*64);
+        for (int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++) {
+                strcat(stringa_matrice, matrice[i][j].lettera);
+                strcat(stringa_matrice, " "); //trovare modo elegante per fare questa cosa in una sola riga, soluzione temporanea per testare features
+            }
+        }
         //Appena creata, invio la matrice a tutti i giocatori
+        int numgioc = Numero_Giocatori_Loggati(lista);
+        for (int i = 0; i < numgioc; i++) {
+            Caronte(lista_fd->fd_client, stringa_matrice, MSG_MATRICE);
+            //Caronte(lista_fd->fd_client, tempo(settings->durata_minuti*60), MSG_TEMPO_PARTITA);
+            
+        }
         Stampa_Matrix(matrice);
         //La partita comincia
         ingame = 1;
@@ -227,6 +277,10 @@ void* Client_Handler (void* arg) {
     int fd_client = thread_args->fd_client;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
+    //lista_fd->fd_client = fd_client;
+    //lista_fd->next = NULL;
+    
+    
 
     //Inizializzo variabili
     Giocatore* giocatore = NULL;
@@ -237,14 +291,33 @@ void* Client_Handler (void* arg) {
     //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
 
+
+
+    //Facciamo partire il thread che controllerà se abbiamo inviato un msg da questo client negli ultimi tot secondi
+
+    //preparo gli args
+    TimeoutThreadArgs* timeout_thread_args = (TimeoutThreadArgs*)malloc(sizeof(TimeoutThreadArgs));
+    timeout_thread_args->fd = fd_client;
+    timeout_thread_args->pthread_id_father = pthread_self();
+    timeout_thread_args->required_inactivity = 20; //#todo fare in modo che venga passata come si deve.
+    int last_command_timestamp = 0;
+    timeout_thread_args->last_command_timestamp = &last_command_timestamp;
+
+    //qui invece lo faccio partire effettivamente
+    pthread_t ciao;
+    pthread_create(&ciao,NULL,The_Bonker, timeout_thread_args);
+
     while (1) {
-        //Memorizzo il messaggio inviato dal client
+        //Memorizzo il messaggtio inviato dal client
         msg = Ade(fd_client);
 
 
         //Memorizzo il tipo di messaggio inviato dal client
         char type = (char)*msg->type;
-
+        printf("%c\n",type);
+        fflush(0);
+        printf("%s\n", msg->msg);
+        fflush(0);
         //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
@@ -253,8 +326,10 @@ void* Client_Handler (void* arg) {
                     break;
                 }
                 //Controllo se il nome è minore o uguale a 10 caratteri
-                if (strlen(msg->msg) > 11) 
+                if (strlen(msg->msg) >= 11) {
                     Caronte(fd_client, "Errore nome utente troppo lungo", MSG_ERR);
+                    break;
+                }
                 //Variabile per controllare se supera il prossimo controllo di soli caratteri alfanumerici
                 int valido = 1;
                 //Controllo se il messaggio contiene solo caratteri alfanumerici
@@ -278,7 +353,7 @@ void* Client_Handler (void* arg) {
                 //Dopo aver fatto tutti i controlli, aggiungo il client alla lista e invio il messaggio di OK
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
                 //Lo aggiungo al file di Log
-                ScriviLog(msg->msg, "Registrato", " ");
+                //ScriviLog(msg->msg, "Registrato", " ");
                 //Adesso il giocatore è loggato
                 giocatore = RecuperaUtente(lista,msg->msg);
                 giocatore->loggato = 1;
@@ -392,6 +467,8 @@ void* Client_Handler (void* arg) {
                 }
                 giocatore = listatemp;
                 giocatore->loggato = 1;
+                //importante se, ci logghiamo l'fd deve cambiare 
+                giocatore->fd_client = fd_client; //serve perché ad esempio lo scorer usa questo per inviare il msg classifica!
                 Caronte(fd_client, "Utente loggato con successo!", MSG_OK);
                 printf("login utente\n");
                 fflush(0);
@@ -422,6 +499,8 @@ void* Client_Handler (void* arg) {
                 fflush(0);
                 break;
         }
+        //qualcosa ha inviato se siamo qui, dunque updatiamo last_command_timestamp
+        last_command_timestamp = time(NULL); //gli mettiamo il tempo corrente! 
         free(msg->msg);
         free(msg->type);
     }
