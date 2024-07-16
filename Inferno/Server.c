@@ -200,7 +200,6 @@ void* Argo(void* arg) {
             }
             temp = temp->next;
         }
-        ingame = 2;
         //sleep(5);
         sleep(60);
     }
@@ -232,7 +231,8 @@ void* asdrubale (void* arg) {
     Giocatore* giocatore = NULL;
     Msg* msg;
     int punti;
-
+    int messaggi_inseriti;
+    Messaggio* messaggi;
     //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
 
@@ -396,13 +396,22 @@ void* asdrubale (void* arg) {
                 fflush(0);
                 break;
             case MSG_POST_BACHECA:
+                if(giocatore == NULL) {
+                    Caronte(fd_client, "Errore, non puoi inviare messaggi, non sei loggato", MSG_ERR);
+                    break;
+                }                
                 inserisci_messaggio(msg->msg, giocatore->nome);
                 Caronte(fd_client, "Messaggio inviato in bacheca!", MSG_OK);
                 break;
             case MSG_SHOW_BACHECA:
-                int messaggi_inseriti;
-                Messaggio* messaggi = leggi_messaggi(&messaggi_inseriti);
-                
+                messaggi = leggi_messaggi(&messaggi_inseriti);
+                for(int i=0; i<messaggi_inseriti;i++){
+                    char* temp = malloc(256);
+                    sprintf(temp, "%s: %s\n", messaggi[i].mittente, messaggi[i].messaggio);
+                    Caronte(fd_client, temp, MSG_OK);
+                    free(temp);
+                }
+                libera_messaggi(messaggi, messaggi_inseriti);
                 break;
             //Aggiungere altri casi
             default:

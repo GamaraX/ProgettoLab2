@@ -99,8 +99,8 @@ void* receiver(void* args) {
                 //leggo il messaggio di input che l'utente scrive al client
                 printf("%s", "[PROMPT PAROLIERE]-->");
                 fflush(0);
-
                 break;
+
             default:
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("%s\n", received_msg->msg);
@@ -220,6 +220,11 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
+        if (strcmp(cmz,"show-msg\n") == 0){
+            Caronte(fd_server,"Voglio vedere la bacheca\n",MSG_SHOW_BACHECA);
+            free(cmz);
+            continue;
+        }
         //Tokenizzo per gestire il secondo input dopo il comando
         char* token;
         token = strtok(cmz, " ");
@@ -243,6 +248,12 @@ int main(int argc, char* argv[]) {
         if (strcmp(token, "p") == 0) {
             token = strtok(NULL, "\n");
             Caronte(fd_server, token, MSG_PAROLA);
+            free(cmz);
+            continue;
+        }
+        if (strcmp(token,"msg") == 0){
+            token = strtok(NULL,"\n");
+            Caronte(fd_server,token,MSG_POST_BACHECA);
             free(cmz);
             continue;
         }

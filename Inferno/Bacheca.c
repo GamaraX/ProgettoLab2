@@ -33,7 +33,7 @@ void inserisci_messaggio(char *messaggio, char *mittente)
 
         messaggi_inseriti--; // Riduciamo il conteggio
     }
-
+    
     // A questo punto possiamo inserire il nuovo messaggio
     bacheca[messaggi_inseriti].messaggio = malloc(strlen(messaggio) + 1);
     strcpy(bacheca[messaggi_inseriti].messaggio, messaggio);
