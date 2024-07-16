@@ -57,6 +57,7 @@ void* receiver(void* args) {
 
             case MSG_FINE:
                 pthread_mutex_unlock(&messaggio_mutex);
+                Caronte(fd_server,"Chiusura client", MSG_FINE);
                 exit(EXIT_SUCCESS);
 
             case MSG_MATRICE:

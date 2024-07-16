@@ -145,9 +145,7 @@ void* The_Bonker(void* args){
                 temp = temp->next;
             }
             pthread_mutex_unlock(&lista->lock);
-            //non ti scordare maaaai di meeeeeeeEEEEEEEEEEEEE 
             Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
-            //kill(casted_args->pthread_id_father, SIGKILL); //qui termino l'handler del client perché non è più necessario!
             //printf("%ld", casted_args->pthread_id_father);
             SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
             pthread_cancel(casted_args->pthread_id_father);
@@ -243,8 +241,8 @@ void* Fasi_Partita(void* arg) {
         //La partita comincia
         ingame = 1;
         starttime = time(NULL);
-        sleep(20);
-        //sleep(argcast->durata_minuti * 60);
+        //sleep(20);
+        sleep(argcast->durata_minuti * 60);
         
         //La partita è finita
         ingame = 0;
@@ -263,6 +261,8 @@ void* Fasi_Partita(void* arg) {
         }
         //sleep(5);
         sleep(60);
+        //Funzione che azzera i punti dei client
+        //Funzione che azzera le parole dei client
     }
     return NULL;
 }
@@ -331,6 +331,8 @@ void* Client_Handler (void* arg) {
         fflush(0);
         printf("%s\n", msg->msg);
         fflush(0);
+        char* stringa_matrice = malloc(sizeof(char)*64);
+        
         //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
@@ -372,6 +374,15 @@ void* Client_Handler (void* arg) {
                 giocatore->loggato = 1;
                 giocatore->lista_parole = NULL;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
+                for (int i = 0; i < 4; i++) {
+                    for(int j = 0; j < 4; j++) {
+                        strcat(stringa_matrice, matrice[i][j].lettera);
+                        strcat(stringa_matrice, " "); //trovare modo elegante per fare questa cosa in una sola riga, soluzione temporanea per testare features
+                    }
+                }
+                Caronte(fd_client, stringa_matrice, MSG_MATRICE);
+                free(stringa_matrice);
+                Caronte(fd_client, tempo(tempo_partita), MSG_TEMPO_PARTITA);
                 //printf("%d\n",CercaUtente(lista, msg->msg));    Debugging
                 break;
             case MSG_FINE:
@@ -379,6 +390,7 @@ void* Client_Handler (void* arg) {
                 if (giocatore != NULL) {
                     giocatore->loggato = 0;
                 }
+                Rimuovi_FD (lista_fd,fd_client);
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
@@ -396,7 +408,6 @@ void* Client_Handler (void* arg) {
                     break;
                 }
                 //Se non sono in fase di pausa, invio la matrice
-                char* stringa_matrice = malloc(sizeof(char)*64);
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
                         strcat(stringa_matrice, matrice[i][j].lettera);
@@ -416,7 +427,7 @@ void* Client_Handler (void* arg) {
                 printf("%d\n", Controlla_Parola_Matrice(matrice, msg->msg));
                 printf("%d\n",Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg));
                 if (Controlla_Parola_Matrice(matrice, msg->msg) == 1 && Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg) == 1) {
-                    if(strstr(msg->msg, "QU") != NULL) {
+                    if(strstr(msg->msg, "QU") != NULL || strstr(msg->msg, "qu") != NULL || strstr(msg->msg, "Qu") != NULL || strstr(msg->msg, "qU") != NULL) {
                         punti = strlen(msg->msg)-1;
                     }
                     else {
