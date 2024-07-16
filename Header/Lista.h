@@ -17,7 +17,6 @@ typedef struct par {
 
 //Lista Parole
 typedef Parola * Lista_Parole;
-//#todo calcola punteggio di questa struct, poi calcola punteggio utente ecc.......ricordarsi di fare sempre le deallocazioni, funzione per aggiungere una parola indovinata blabla
 
 //Creazione nodo Giocatore
 typedef struct gio {
@@ -26,7 +25,6 @@ typedef struct gio {
     int punti;
     int fd_client;
     int loggato;
-    //#todo ListaParole è una lista linkata che oltre al next (per scorrerla) ha due campi valore, uno char* per la parole e uno int per il punteggio guadagnato da quella parola
     Lista_Parole lista_parole;
     struct gio* next;
 }Giocatore;
@@ -46,6 +44,7 @@ typedef struct arg{
     Lista_Giocatori_Concorrente* lista;
     char* file_diz;
     int tempo_partita;
+    int tempo_disconnessione;
 } ThreadArgs;
 
 //Funzione che permette al client di giocare
@@ -55,7 +54,7 @@ void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int
 //Funzione per rimuovere Giocatori
 char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente);
 //Funzione per rimuovere i client tramite il fd
-int Rimuovi_FD (Lista_FDCLIENT lista, int fd_client);
+Lista_FDCLIENT Rimuovi_FD (Lista_FDCLIENT lista, int fd_client);
 //Funzione per contare il numero di Giocatori
 int Numero_Giocatori_Loggati(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione per cercare un giocatore con un determinato nome utente
