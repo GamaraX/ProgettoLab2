@@ -28,3 +28,7 @@ pisa;Cancellato;
 ppppppppppp;Cancellato; 
 ppppppppp;Cancellato; 
 pppppppppp;Cancellato; 
+pisa;Immissione;casi
+pisa;Immissione;quasi
+pisa;Immissione;casi
+pisa;Immissione;quasi

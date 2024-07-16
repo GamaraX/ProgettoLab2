@@ -24,7 +24,6 @@
 
 typedef struct imp {
     Lettera** matrice; //Matrice corrente
-    int Tempo_di_Gioco; //Timestamp dell'ultimo comando inviato dal client
     char* file_matrice; //File matrice usata
     int durata_minuti; //Durata partita
     int seed;   //Seed usato
@@ -62,6 +61,7 @@ int conteggio_player;
 Lista_Giocatori Lista_Scorer;
 pthread_mutex_t scorer_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t scorer_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //Definisco la funzione che gestisce SIGUSR1
 // Definisco la funzione che gestisce SIGUSR1
@@ -106,26 +106,26 @@ void GestoreSigUsr1(int signum) {
 }
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
-    Lista_Giocatori gioctemp = lista->lista;
-    while(gioctemp != NULL) {
-        if(gioctemp->loggato) {
-            Caronte(gioctemp->fd_client, "Il server si sta chiudendo", MSG_FINE);
-        }
-        gioctemp = gioctemp->next;
+    pthread_mutex_lock(&fd_mutex);
+    Lista_FDCLIENT clietemp = lista_fd;
+    while(clietemp != NULL) {
+        Caronte(clietemp->fd_client, "Il server si sta chiudendo", MSG_FINE);
+        clietemp = clietemp->next;
     }
     Dealloca_Dizionario(parole, conteggio_parole);
+    pthread_mutex_unlock(&fd_mutex);
     exit(EXIT_SUCCESS);
 }
-
 //thread per la disconnessione
 typedef struct timeout_thread{
-    int pthread_id_father;
+    pthread_t pthread_id_father;
     int fd;
     int* last_command_timestamp;
     int required_inactivity;
 }TimeoutThreadArgs;
 
 void* The_Bonker(void* args){
+    int retvalue;
     TimeoutThreadArgs* casted_args = (TimeoutThreadArgs*)args;
     while(1){
        sleep(casted_args->required_inactivity);
@@ -140,14 +140,18 @@ void* The_Bonker(void* args){
                 if(temp->fd_client == casted_args->fd && temp->loggato){
                     //l'abbiamo trovato!
                     temp->loggato = 0;
+                    break;
                 }
                 temp = temp->next;
             }
             pthread_mutex_unlock(&lista->lock);
-            //close(casted_args->fd); //#fare come si deve la syscall, matteo sicuramente si ricorda meglio
+            //non ti scordare maaaai di meeeeeeeEEEEEEEEEEEEE 
             Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
-            kill(casted_args->pthread_id_father, SIGTERM); //qui termino l'handler del client perché non è più necessario!
-
+            //kill(casted_args->pthread_id_father, SIGKILL); //qui termino l'handler del client perché non è più necessario!
+            //printf("%ld", casted_args->pthread_id_father);
+            SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
+            pthread_cancel(casted_args->pthread_id_father);
+            return NULL;
         }
     }
 }
@@ -222,12 +226,19 @@ void* Fasi_Partita(void* arg) {
             }
         }
         //Appena creata, invio la matrice a tutti i giocatori
-        int numgioc = Numero_Giocatori_Loggati(lista);
-        for (int i = 0; i < numgioc; i++) {
-            Caronte(lista_fd->fd_client, stringa_matrice, MSG_MATRICE);
-            //Caronte(lista_fd->fd_client, tempo(settings->durata_minuti*60), MSG_TEMPO_PARTITA);
+        pthread_mutex_lock(&lista->lock);
+            Lista_Giocatori listatemp = lista->lista;
+            while(listatemp != NULL){
+                if (listatemp->loggato == 1) {
+                    Caronte(listatemp->fd_client, stringa_matrice, MSG_MATRICE);
+                    Caronte(listatemp->fd_client, tempo(argcast->durata_minuti*60), MSG_TEMPO_PARTITA);
+                }
+                listatemp = listatemp->next;
+            }
+
+        pthread_mutex_unlock(&lista->lock);
+        
             
-        }
         Stampa_Matrix(matrice);
         //La partita comincia
         ingame = 1;
@@ -277,9 +288,11 @@ void* Client_Handler (void* arg) {
     int fd_client = thread_args->fd_client;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
-    //lista_fd->fd_client = fd_client;
-    //lista_fd->next = NULL;
-    
+    Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT));
+    lista_fd_new->next = lista_fd;
+    lista_fd_new->fd_client = thread_args->fd_client;
+    //ora aggiorno il puntatore alla testa di lista fd
+    lista_fd = lista_fd_new;    
     
 
     //Inizializzo variabili
@@ -400,8 +413,8 @@ void* Client_Handler (void* arg) {
                     break;
                 }
                 punti = 0;
-                //printf("%d\n", Controlla_Parola_Matrice(matrice, msg->msg));
-                //printf("%d\n",Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg));
+                printf("%d\n", Controlla_Parola_Matrice(matrice, msg->msg));
+                printf("%d\n",Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg));
                 if (Controlla_Parola_Matrice(matrice, msg->msg) == 1 && Ricerca_Binaria_Dizionario(parole ,conteggio_parole,msg->msg) == 1) {
                     if(strstr(msg->msg, "QU") != NULL) {
                         punti = strlen(msg->msg)-1;
@@ -592,13 +605,6 @@ int main (int argc, char* argv[]) {
     //Alloco una Matrice 4x4
     matrice = Crea_Matrix();
     
-    //TEMPORANEO
-    
-    //offset da definire e aggiustare
-                    //printf("ciao\n");
-                    //fflush(0);
-    //TEMPORANEO
-
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista...\n");
     fflush(0);

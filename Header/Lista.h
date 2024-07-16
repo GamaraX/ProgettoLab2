@@ -54,6 +54,8 @@ void* asdrubale (void* arg);
 void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int fd);
 //Funzione per rimuovere Giocatori
 char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_utente);
+//Funzione per rimuovere i client tramite il fd
+int Rimuovi_FD (Lista_FDCLIENT lista, int fd_client);
 //Funzione per contare il numero di Giocatori
 int Numero_Giocatori_Loggati(Lista_Giocatori_Concorrente* lista_conc);
 //Funzione per cercare un giocatore con un determinato nome utente

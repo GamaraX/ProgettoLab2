@@ -75,7 +75,7 @@ void Genera_Matrix(Lettera** matrice, int seed) {
         lett = (rand()%(90-65+1))+65;
 
         if (lett == 'Q' )
-            strcat(stringa, "QU");
+            strcat(stringa, "Qu");
         else {
             char temp[2] = {lett, '\0'};
             strcat(stringa, temp);
@@ -96,7 +96,7 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente) {
     }
     char lettiniz[3];
     if (temppparola[0] == 'Q') {
-        strcpy(lettiniz, "QU");
+        strcpy(lettiniz, "Qu");
     }
     else {
         lettiniz[0] = temppparola[0];
@@ -123,9 +123,9 @@ int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int co
     }
 
     char* lett = malloc(3* sizeof(char));
-    // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come QU
+    // Controllo se la parola pos-esima dell'utente è la parola Q, che in tal caso devo trattare come Qu
     if (parola_utente[pos] == 'Q') {
-        strcpy(lett, "QU");
+        strcpy(lett, "Qu");
     } else {
         lett[0] = parola_utente[pos];
         lett[1] = '\0';
