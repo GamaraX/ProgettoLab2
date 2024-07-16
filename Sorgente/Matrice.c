@@ -10,9 +10,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include "../Purgatorio/macro.h"
-#include "../Purgatorio/Lista.h"
-#include "../Purgatorio/Matrice.h"
+#include "../Header/macro.h"
+#include "../Header/Lista.h"
+#include "../Header/Matrice.h"
 
 Lettera** Crea_Matrix() {
     Lettera** mtx = (Lettera**) malloc(4 * sizeof(Lettera*));

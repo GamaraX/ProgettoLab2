@@ -5,8 +5,8 @@ CC = gcc
 CFLAGS = -Wall -g -pedantic -pthread
 
 # Directory
-HEADER = ../Purgatorio/
-SORGENTE = ../Inferno/
+HEADER = ../Header/
+SORGENTE = ../Sorgente/
 
 # Header File
 HDRS1 = $(HEADER)macro.h

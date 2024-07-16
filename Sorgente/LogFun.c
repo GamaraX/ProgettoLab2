@@ -4,10 +4,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include "../Purgatorio/macro.h"
-#include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/Lista.h"
-#include "../Purgatorio/LogFun.h"
+#include "../Header/macro.h"
+#include "../Header/Protocolli.h"
+#include "../Header/Lista.h"
+#include "../Header/LogFun.h"
 
 //Inizializzo variabili globali
 pthread_mutex_t log_mutex;
@@ -27,7 +27,7 @@ char* CercaLog(char* azione) {
     size_t len = 0;
     ssize_t cmplettura;
     //Apro il file in sola lettura
-    FILE* tempfd = fopen("../Paradiso/Log.txt", "r");
+    FILE* tempfd = fopen("../Eseguibili/Log.txt", "r");
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
         perror("Errore apertura file");
@@ -54,7 +54,7 @@ void ScriviLog(char* utente, char* azione, char* testo) {
     //printf("%s %s %s\n", utente, azione, testo);              Debugging
     pthread_mutex_lock(&log_mutex);
     //Apro il file in append
-    FILE* tempfd = fopen("../Paradiso/Log.txt", "a");
+    FILE* tempfd = fopen("../Eseguibili/Log.txt", "a");
     //Controllo se il file esiste o ci sono errori/corruzioni
     if (tempfd == NULL) {
         perror("Errore apertura file");

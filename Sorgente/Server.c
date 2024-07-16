@@ -14,13 +14,13 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include "../Purgatorio/macro.h"
-#include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/Lista.h"
-#include "../Purgatorio/Matrice.h"
-#include "../Purgatorio/LogFun.h"
-#include "../Purgatorio/Dizionario.h"
-#include "../Purgatorio/Bacheca.h"
+#include "../Header/macro.h"
+#include "../Header/Protocolli.h"
+#include "../Header/Lista.h"
+#include "../Header/Matrice.h"
+#include "../Header/LogFun.h"
+#include "../Header/Dizionario.h"
+#include "../Header/Bacheca.h"
 
 typedef struct imp {
     Lettera** matrice; //Matrice corrente
@@ -45,8 +45,8 @@ char* tempo(int max_dur);
 //#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
 time_t starttime;
-char* filemat= "../Paradiso/matrici_disponibili.txt";
-char* filediz = "../Paradiso/dictionary_ita.txt";
+char* filemat= "../Eseguibili/matrici_disponibili.txt";
+char* filediz = "../Eseguibili/dictionary_ita.txt";
 Lettera** matrice;
 Lista_Giocatori_Concorrente* lista;
 int ingame = 0;

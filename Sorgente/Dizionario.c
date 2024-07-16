@@ -10,12 +10,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include "../Purgatorio/macro.h"
-#include "../Purgatorio/Protocolli.h"
-#include "../Purgatorio/Lista.h"
-#include "../Purgatorio/Matrice.h"
-#include "../Purgatorio/LogFun.h"
-#include "../Purgatorio/Dizionario.h"
+#include "../Header/macro.h"
+#include "../Header/Protocolli.h"
+#include "../Header/Lista.h"
+#include "../Header/Matrice.h"
+#include "../Header/LogFun.h"
+#include "../Header/Dizionario.h"
 
 
 #define MAX_PAROLE 279875
