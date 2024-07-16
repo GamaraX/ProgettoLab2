@@ -91,35 +91,31 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
     return "";
 }
 
-int Rimuovi_FD (Lista_FDCLIENT lista, int fd_client) {
-    int tmpfd;
+Lista_FDCLIENT Rimuovi_FD (Lista_FDCLIENT lista, int fd_client) {
     Lista_FDCLIENT listafd = lista;
     // Caso base
     if (listafd == NULL) {
-        return 0;
+        return listafd;
     }
     // Controllo se il nome utente coincide
     if (listafd->fd_client == fd_client) {
         printf("Client eliminato\n");
-        FDCLIENT* temp = listafd;
         listafd = listafd->next;
-        tmpfd = temp->fd_client;
-        return 1;
+        return listafd;
     }
     // Cerco il prossimo nome utente nella lista
     FDCLIENT* prev = lista;
     FDCLIENT* curr = lista->next;
     while (curr != NULL) {
         if (curr->fd_client == fd_client) {
-            prev->next = curr->next;
-            tmpfd = curr->fd_client;            
+            prev->next = curr->next;            
             free(curr);
-            return tmpfd;
+            return listafd;
         }
         prev = curr;
         curr = curr->next;
     }
-    return 1;
+    return listafd;
 }
 //Funzione per contare il numero di Giocatori
 int Numero_Giocatori_Loggati(Lista_Giocatori_Concorrente* lista_conc) {
