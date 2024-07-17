@@ -69,7 +69,7 @@ pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 void GestoreSigUsr1(int signum) {
     pthread_mutex_lock(&scorer_mutex);
     //printf("tid: %ld\n", pthread_self()); DEBUG
-    //fflush(0);
+    //fflush(NULL);
 
     //Scorro la lista fino a che non arrivo alla fine
     Lista_Giocatori head_giocatori = lista->lista;
@@ -224,7 +224,7 @@ void* Fasi_Partita(void* arg) {
 
     while(1) {
         printf("Matrice caricata: %s\n", argcast->file_matrice);
-        fflush(0);
+        fflush(NULL);
         //Se è presente un file di matrice, carico la riga della matrice, altrimenti la genero casualmente
         if (argcast->file_matrice != NULL) {
             Carica_Matrix_File(tempfd, matrice);
@@ -233,7 +233,7 @@ void* Fasi_Partita(void* arg) {
             Genera_Matrix(matrice, argcast->seed);
         }
         //Alloco lo spazio per inserire e concatenare in una stringa la matrice passata
-        char* stringa_matrice = malloc(sizeof(char)*64);
+        char* stringa_matrice = (char*)malloc(sizeof(char)*64);
         for (int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++) {
                 strcat(stringa_matrice, matrice[i][j].lettera);
@@ -250,6 +250,7 @@ void* Fasi_Partita(void* arg) {
                 }
                 listatemp = listatemp->next;
             }
+        free(stringa_matrice);
 
         pthread_mutex_unlock(&lista->lock);
         
@@ -340,9 +341,9 @@ void* Client_Handler (void* arg) {
         //Memorizzo il tipo di messaggio inviato dal client
         char type = (char)*msg->type;
         //printf("%c\n",type);  DEBUG
-        //fflush(0);            DEBUG
+        //fflush(NULL);            DEBUG
         //printf("%s\n", msg->msg); DEBUG
-        //fflush(0);            DEBUG
+        //fflush(NULL);            DEBUG
 
         //Alloco lo spazio per la matrice
         char* stringa_matrice = malloc(sizeof(char)*64);
@@ -364,7 +365,7 @@ void* Client_Handler (void* arg) {
                 //Controllo se il messaggio contiene solo caratteri alfanumerici
                 for (int i = 0; i < strlen(msg->msg); i++) {
                     //printf("%c\n", msg->msg[i]);
-                    //fflush(0);
+                    //fflush(NULL);
                     if(isdigit(msg->msg[i]) == 0 && isalpha(msg->msg[i]) == 0) {
                         Caronte(fd_client, "Errore carattere speciale immesso", MSG_ERR);
                         valido = 0;
@@ -383,7 +384,7 @@ void* Client_Handler (void* arg) {
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
                 //Lo aggiungo al file di Log
                 ScriviLog(msg->msg, "Registrato", " ");
-                fflush(0);
+                fflush(NULL);
                 //Adesso il giocatore è loggato
                 giocatore = RecuperaUtente(lista,msg->msg);
                 giocatore->loggato = 1;
@@ -414,7 +415,7 @@ void* Client_Handler (void* arg) {
                 break;
             case MSG_MATRICE:
                 //printf("%s\n", msg->msg);
-                //fflush(0);
+                //fflush(NULL);
                 //Controllo se il giocatore è registrato o loggato
                 if (giocatore == NULL) {
                     Caronte(fd_client, "Errore, devi registrarti per visualizzare la matrice", MSG_ERR);
@@ -428,6 +429,8 @@ void* Client_Handler (void* arg) {
                 //Se non sono in fase di pausa, invio la matrice sotto forma di stringa e il tempo partita
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
+                        printf("Carattere della matrice posizione %d,%d:%s\n", i,j,matrice[i][j].lettera);
+                        fflush(NULL);
                         strcat(stringa_matrice, matrice[i][j].lettera);
                         strcat(stringa_matrice, " "); 
                     }
@@ -462,19 +465,19 @@ void* Client_Handler (void* arg) {
                         par->parola = malloc(sizeof(char)*strlen(msg->msg)+1);
                         strcpy(par->parola,msg->msg);
                         //printf("%s", par->parola);
-                        //fflush(0);
+                        //fflush(NULL);
                         par->next = giocatore->lista_parole;
                         giocatore->lista_parole = par; 
                     }
                     //Scrivo il Log
                     ScriviLog(giocatore->nome, "Immissione", msg->msg);
-                    fflush(0);
+                    fflush(NULL);
                     //Assegno i punti
                     giocatore->punti += punti;
                     char spunti[3];
                     //Invio il punteggio totalizzato dal giocatore al giocatore stesso tramite stringa
                     sprintf(spunti, "%d", punti);
-                    fflush(0);
+                    fflush(NULL);
                     Caronte(fd_client, spunti, MSG_PUNTI_PAROLA);
                     break;
                 }
@@ -491,7 +494,7 @@ void* Client_Handler (void* arg) {
                 //Elimino il giocatore dalla lista
                 char* tmpusername = Rimuovi_Giocatore(lista,giocatore->nome);
                 //printf("%s\n",tmpusername); DEBUG
-                //fflush(0);                  DEBUG
+                //fflush(NULL);                  DEBUG
 
                 //Controllo se è stato trovato o meno un nome utente tramite la funzione Rimuovi_Giocatore
                 if (strcmp("", tmpusername) == 0) {
@@ -504,7 +507,7 @@ void* Client_Handler (void* arg) {
                 Caronte(fd_client, "Cancellazione utente effettuata correttamente\n", MSG_OK);
                 giocatore = NULL;
                 //printf("Cancello utente\n");
-                //fflush(0);
+                //fflush(NULL);
                 break;
             case MSG_LOGIN_UTENTE:
                 //Controllo se l'utente è loggato o meno
@@ -530,7 +533,7 @@ void* Client_Handler (void* arg) {
                 giocatore->fd_client = fd_client; 
                 Caronte(fd_client, "Utente loggato con successo!", MSG_OK);
                 //printf("login utente\n");
-                //fflush(0);
+                //fflush(NULL);
                 break;
             case MSG_POST_BACHECA:
                 //Controllo se il giocatore è loggato o meno
@@ -552,7 +555,7 @@ void* Client_Handler (void* arg) {
                 for(int i=0; i<messaggi_inseriti; i++){
                     char* temp = malloc(256);
                     sprintf(temp, "%s: %s\n", messaggi[i].mittente, messaggi[i].messaggio);
-                    fflush(0);
+                    fflush(NULL);
                     Caronte(fd_client, temp, MSG_OK);
                     free(temp);
                 }
@@ -563,7 +566,7 @@ void* Client_Handler (void* arg) {
             default:
                 //È stato inserito un comando non riconosciuto
                 printf("Comando non riconosciuto!\n");
-                fflush(0);
+                fflush(NULL);
                 Caronte(fd_client, "Errore Comando non disponibile", MSG_ERR);
                 break;
         }
@@ -630,13 +633,12 @@ int main (int argc, char* argv[]) {
                 //Controllo se è stato mandato un file matrice corretto
                 if(matrice_open == NULL){
                     printf("File matrice non esistente\n");
-                    fflush(0);
+                    fflush(NULL);
                     exit(EXIT_SUCCESS);
                 }
                 file_matrice_ricevuto = 1;
                 //Setto il file matrice nelle impostazioni del server
                 settings->file_matrice = strdup(optarg);
-                Carica_Matrix_File(matrice_open, matrice);
                 fclose(matrice_open);
                 break;
             case OPT_DURATA:
@@ -666,11 +668,11 @@ int main (int argc, char* argv[]) {
     //Controllo se ho ricevuto sia il seed che il file matrice
     if(seed_ricevuto+file_matrice_ricevuto == 2){
         printf("Impossibile inserire contemporaneamente sia il seed che il file matrice!");
-        fflush(0);
+        fflush(NULL);
         exit(EXIT_SUCCESS);    
     }else if(seed_ricevuto && !file_matrice_ricevuto){
         printf("Non è stato passato il file matrice, useremo il seed...");
-        fflush(0);
+        fflush(NULL);
         settings->file_matrice = NULL;
     }
 
@@ -686,7 +688,7 @@ int main (int argc, char* argv[]) {
     
     //Creo la lista vuota di Giocatori
     printf("Provo a creare la lista giocatori...\n");
-    fflush(0);
+    fflush(NULL);
     //Creo la lista di giocatori e inizializzo la mutex
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));
     Inizializza_Lista(lista);
@@ -741,7 +743,7 @@ char* tempo(int max_dur){
     //Calcolo la differenza tra i due tempi
     double tempo_passato = difftime(fine_tempo, starttime);
     printf("%f\n", tempo_passato);
-    fflush(0);
+    fflush(NULL);
     //Calcolo quanto tempo rimane
     double tempo_rimanente = max_dur - tempo_passato; //
     char* mess = malloc(256);
