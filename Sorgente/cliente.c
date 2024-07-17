@@ -19,7 +19,7 @@
 #include "../Header/Matrice.h"
 #include "../Header/LogFun.h"
 
-//Inizializzo variabile globale
+//Inizializzo variabili globali
 Lettera** matrice;
 int fd_server;
 pthread_mutex_t messaggio_mutex;
@@ -32,7 +32,7 @@ void GestoreSigint(int signum) {
     exit(EXIT_SUCCESS);
 }
 
-
+//Funzione che riceve dal Server
 void* receiver(void* args) {
     //Creo un variabile che memorizza il messaggio di ritorno dal server
     Msg* received_msg;
@@ -44,18 +44,21 @@ void* receiver(void* args) {
         //Switch sul tipo di ritorno
         switch(type){
             case MSG_OK:
+                //Messaggio di Ok, stampo il messaggio ricevuto
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\n%s\n", received_msg->msg);
                 fflush(0);
-                //leggo il messaggio di input che l'utente scrive al client
                 break;
+
             case MSG_ERR:
+                //Messaggio di Errore, stampo il messaggio ricevuto
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\n%s\n", received_msg->msg);
                 fflush(0);
                 break;
 
             case MSG_FINE:
+                //Messaggio di Fine, dico al server di chiudere il fd e il collegamento
                 pthread_mutex_unlock(&messaggio_mutex);
                 Caronte(fd_server,"Chiusura client", MSG_FINE);
                 exit(EXIT_SUCCESS);
@@ -69,17 +72,23 @@ void* receiver(void* args) {
                 Stampa_Matrix(matrice);
                 //fare free matrice
                 break;
+
             case MSG_PUNTI_PAROLA:
+                //Messaggio di ritorno dopo aver inserito una parola della matrice, stampo il punteggio ricevuto
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\nhai totalizzato %s punti!\n", received_msg->msg);
                 fflush(0);
                 break;
+
             case MSG_TEMPO_PARTITA:
+                //Messaggio di Tempo restante, stampo il messaggio ricevuto
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\n%s rimanenti\n", received_msg->msg);
                 fflush(0);
                 break;
+
             case MSG_PUNTI_FINALI:
+                //Messaggio di Classifica, stampo la classifica ricevuta
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\nClassifica generale:\n");
                 fflush(0);
@@ -88,6 +97,7 @@ void* receiver(void* args) {
                 break;
 
             default:
+                //Messaggio di default, stampo il messaggio ricevuto
                 pthread_mutex_unlock(&messaggio_mutex);
                 printf("\n%s\n", received_msg->msg);
                 fflush(0);
@@ -167,14 +177,15 @@ int main(int argc, char* argv[]) {
     while(1) {
         ssize_t nread;
         pthread_mutex_lock(&messaggio_mutex);
-        //leggo il messaggio di input che l'utente scrive al client
+        //Stampo il prompt per i comandi del paroliere
         printf("%s", "\n[PROMPT PAROLIERE]-->");
         fflush(0);
         //alloco la quantità di caratteri massimi possibili, contando anche la chat di gioco
         char* cmz = malloc(512*sizeof(char));
-        
+        //leggo il messaggio di input che l'utente scrive al client
         SYSC(nread, read(STDIN_FILENO,cmz, 134), "Errore Read");
         cmz[nread] = '\0';
+
         //Messaggio di aiuto
         if(strcmp(cmz, "aiuto\n") == 0) {
             printf(HELP_MESSAGE);
@@ -190,7 +201,7 @@ int main(int argc, char* argv[]) {
             free(cmz);
             exit(EXIT_SUCCESS);
         }
-        //Messaggio per richiedere la matrice corrente
+        //Messaggio per richiedere la matrice corrente (verrà inviato in concomitanza anche il tempo restante della partita o della pausa)
         if (strcmp(cmz, "matrice\n") == 0) {
             Caronte(fd_server, "Invio Matrice gioco corrente", MSG_MATRICE);
             free(cmz);
@@ -202,6 +213,7 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
+        //Messaggio per mostrare la bacheca dei messaggi
         if (strcmp(cmz,"show-msg\n") == 0){
             Caronte(fd_server,"Voglio vedere la bacheca\n",MSG_SHOW_BACHECA);
             free(cmz);
@@ -214,6 +226,7 @@ int main(int argc, char* argv[]) {
         ///Messaggio per registrare un giocatore
         if (strcmp(token, "registra_utente") == 0) {
             token = strtok(NULL, "\n");
+            //Gestione errore token vuoto
             if (token == NULL) {
                 printf("Nome utente non valido\n");
                 fflush(0);
@@ -228,6 +241,7 @@ int main(int argc, char* argv[]) {
         //Messaggio per loggare un giocatore già registrato
         if(strcmp(token, "login_utente") == 0) {
             token = strtok(NULL, "\n");
+            //Gestione errore token vuoto
             if (token == NULL) {
                 printf("Nome utente non valido\n");
                 fflush(0);
@@ -241,6 +255,7 @@ int main(int argc, char* argv[]) {
         //Messaggio per proporre una parola al server
         if (strcmp(token, "p") == 0) {
             token = strtok(NULL, "\n");
+            //Gestione errore token vuoto
             if (token == NULL) {
                 printf("Parola non valida\n");
                 fflush(0);
@@ -251,8 +266,10 @@ int main(int argc, char* argv[]) {
             free(cmz);
             continue;
         }
+        //Messaggio per scrivere sulla bacheca generale
         if (strcmp(token,"msg") == 0){
             token = strtok(NULL,"\n");
+            //Gestione errore token vuoto
             if (token == NULL) {
                 printf("Messaggio non valido\n");
                 fflush(0);

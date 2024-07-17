@@ -25,6 +25,7 @@
 int Carica_Dizionario(const char *nomeFile, char *parole[]) {
     char buffer[MAX_LUNGHEZZA];
     int conteggio = 0;
+    //Apro il file in lettura
     FILE *file = fopen(nomeFile, "r");
     //Controlla se ci sono errori nell'apertura del file
     if (!file) {

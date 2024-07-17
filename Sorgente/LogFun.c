@@ -55,13 +55,13 @@ void ScriviLog(char* utente, char* azione, char* testo) {
     pthread_mutex_lock(&log_mutex);
     //Apro il file in append
     FILE* tempfd = fopen("../Eseguibili/Log.txt", "a");
-    //Controllo se il file esiste o ci sono errori/corruzioni
+    //Controllo se il file esiste o ci sono errori
     if (tempfd == NULL) {
         perror("Errore apertura file");
         pthread_mutex_unlock(&log_mutex);
         return;
     }
-    //Scrivo nel log la terna in formato nome utente;azione eseguita;testo (viene memorizzata la parola, altrimenti è un white space)
+    //Scrivo nel log la terna in formato nome utente;azione eseguita;testo (viene memorizzata la parola o la classifica, altrimenti è un white space)
     fprintf(tempfd, "%s;%s;%s\n", utente, azione, testo);
     //Chiudo il file
     fclose(tempfd);

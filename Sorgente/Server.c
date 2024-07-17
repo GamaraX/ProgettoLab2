@@ -95,6 +95,7 @@ void GestoreSigUsr1(int signum) {
             new_head->next = Lista_Scorer;
             Lista_Scorer = new_head;
             head_giocatori->punti = 0;
+            head_giocatori->lista_parole = NULL;
             pthread_cond_signal(&scorer_cond);
             break;
         }
@@ -147,6 +148,7 @@ void* The_Bonker(void* args){
             pthread_mutex_unlock(&lista->lock);
             Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
             //printf("%ld", casted_args->pthread_id_father);
+            lista_fd = Rimuovi_FD(lista_fd, casted_args->fd);
             SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
             pthread_cancel(casted_args->pthread_id_father);
             return NULL;
@@ -191,6 +193,7 @@ void *Thread_Scorer(void *args){
     for (int i = 0; i < numgioc; i++){
         Caronte(giocatori_raccolti[i]->fd_client, classifica, MSG_PUNTI_FINALI);
     }
+    ScriviLog("Scorer", "Classifica\n", classifica);
     pthread_exit(NULL);
 }
 
@@ -288,7 +291,7 @@ void* Client_Handler (void* arg) {
     int fd_client = thread_args->fd_client;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
-    Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT));
+    Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT)); //#FLAG
     lista_fd_new->next = lista_fd;
     lista_fd_new->fd_client = thread_args->fd_client;
     //ora aggiorno il puntatore alla testa di lista fd
@@ -312,7 +315,9 @@ void* Client_Handler (void* arg) {
     TimeoutThreadArgs* timeout_thread_args = (TimeoutThreadArgs*)malloc(sizeof(TimeoutThreadArgs));
     timeout_thread_args->fd = fd_client;
     timeout_thread_args->pthread_id_father = pthread_self();
-    timeout_thread_args->required_inactivity = 20; //#todo fare in modo che venga passata come si deve.
+    //timeout_thread_args->required_inactivity = thread_args->tempo_disconnessione*60; 
+
+    timeout_thread_args->required_inactivity = 20; //#FLAG
     int last_command_timestamp = 0;
     timeout_thread_args->last_command_timestamp = &last_command_timestamp;
 
@@ -368,7 +373,7 @@ void* Client_Handler (void* arg) {
                 //Dopo aver fatto tutti i controlli, aggiungo il client alla lista e invio il messaggio di OK
                 Aggiungi_Giocatore(lista, msg->msg, fd_client);
                 //Lo aggiungo al file di Log
-                //ScriviLog(msg->msg, "Registrato", " ");
+                ScriviLog(msg->msg, "Registrato", " ");
                 //Adesso il giocatore è loggato
                 giocatore = RecuperaUtente(lista,msg->msg);
                 giocatore->loggato = 1;
@@ -390,7 +395,7 @@ void* Client_Handler (void* arg) {
                 if (giocatore != NULL) {
                     giocatore->loggato = 0;
                 }
-                Rimuovi_FD (lista_fd,fd_client);
+                lista_fd = Rimuovi_FD (lista_fd,fd_client);
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
@@ -558,7 +563,7 @@ int main (int argc, char* argv[]) {
         {"durata", required_argument, 0, OPT_DURATA},
         {"seed", required_argument, 0, OPT_SEED},
         {"diz", required_argument, 0, OPT_DIZ},
-        {"disconnetti", required_argument, 0, OPT_DISCONNECT},
+        {"disconnetti-dopo", required_argument, 0, OPT_DISCONNECT},
         {0, 0, 0, 0}
     };
 
