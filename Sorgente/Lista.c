@@ -63,7 +63,6 @@ char* Rimuovi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome_uten
     }
     //Controllo se il nome utente coincide
     if ((*lista)->nome == nome_utente) {
-        printf("Giocatore eliminato\n");
         //Faccio puntare alla testa della lista
         Giocatore* temp = *lista;
         *lista = (*lista)->next;
