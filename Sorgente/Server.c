@@ -21,6 +21,8 @@
 #include "../Header/LogFun.h"
 #include "../Header/Dizionario.h"
 #include "../Header/Bacheca.h"
+//Serve per non far crashare il programma quando un parametro non viene riconosciuto
+extern int opterr;
 
 typedef struct imp {
     Lettera** matrice; //Matrice corrente
@@ -31,6 +33,7 @@ typedef struct imp {
     int tempo_disconnessione; //tempo di disconnessione oltre il quale disconnetto il client
 }Impostazioni_Gioco;
 
+//Enum utilizzata per la getopt
 enum {
     OPT_MATRICE = 1,
     OPT_DURATA,
@@ -41,10 +44,9 @@ enum {
 
 char* tempo(int max_dur);
 
-//#todo controllare ogni tot secondi se currenttimestamp - timestampultimocomandoSINGOLOUTENTE chiudi connessione, fai un thread che prende in ingresso il timestamp e il giocatore come puntatori!!!!!!
 //Inizializzo variabili globali
 time_t starttime;
-char* filemat= "../Eseguibili/matrici_disponibili.txt";
+char* filemat= NULL; //"../Eseguibili/matrici_disponibili.txt";
 char* filediz = "../Eseguibili/dictionary_ita.txt";
 Lettera** matrice;
 Lista_Giocatori_Concorrente* lista;
@@ -64,24 +66,26 @@ pthread_cond_t scorer_cond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t fd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //Definisco la funzione che gestisce SIGUSR1
-// Definisco la funzione che gestisce SIGUSR1
 void GestoreSigUsr1(int signum) {
     pthread_mutex_lock(&scorer_mutex);
-    printf("tid: %ld\n", pthread_self());
-    fflush(0);
+    //printf("tid: %ld\n", pthread_self()); DEBUG
+    //fflush(0);
 
+    //Scorro la lista fino a che non arrivo alla fine
     Lista_Giocatori head_giocatori = lista->lista;
     while (head_giocatori != NULL) {
         if (head_giocatori->thread == pthread_self()) {
 
-            // Copiando la testa del giocatore
+            //Copio la testa del giocatore
             Lista_Giocatori new_head = malloc(sizeof(Giocatore));
+            //Controllo se c'è un errore di allocazione memoria
             if (new_head == NULL) {
                 perror("Errore allocazione memoria");
                 pthread_mutex_unlock(&scorer_mutex);
                 return;
             }
-
+            
+            //Alloco un nuovo nodo e lo metto nella lista dello scorer
             new_head->fd_client = head_giocatori->fd_client;
             new_head->nome = strdup(head_giocatori->nome);
             if (new_head->nome == NULL) {
@@ -90,12 +94,15 @@ void GestoreSigUsr1(int signum) {
                 pthread_mutex_unlock(&scorer_mutex);
                 return;
             }
+            //Pusho il nodo nella lista dello scorer così che il consumatore possa recuperarlo
             new_head->punti = head_giocatori->punti;
             new_head->thread = head_giocatori->thread;
             new_head->next = Lista_Scorer;
             Lista_Scorer = new_head;
+            //Azzero i punteggi e la lista delle parole di ogni giocatore
             head_giocatori->punti = 0;
             head_giocatori->lista_parole = NULL;
+            //Segnalo allo scorer che ho inserito in coda
             pthread_cond_signal(&scorer_cond);
             break;
         }
@@ -108,16 +115,18 @@ void GestoreSigUsr1(int signum) {
 //Definisco la funzione che gestise la SIGINT
 void GestoreSigint(int signum) {
     pthread_mutex_lock(&fd_mutex);
+    //Scorro la lista dei fd fino alla fine, invio ad ogni client il messaggio che il server si sta chiudendo
     Lista_FDCLIENT clietemp = lista_fd;
     while(clietemp != NULL) {
         Caronte(clietemp->fd_client, "Il server si sta chiudendo", MSG_FINE);
         clietemp = clietemp->next;
     }
+    //Dealloco il dizionario
     Dealloca_Dizionario(parole, conteggio_parole);
     pthread_mutex_unlock(&fd_mutex);
     exit(EXIT_SUCCESS);
 }
-//thread per la disconnessione
+//Definisco Thread per la disconnessione
 typedef struct timeout_thread{
     pthread_t pthread_id_father;
     int fd;
@@ -125,37 +134,35 @@ typedef struct timeout_thread{
     int required_inactivity;
 }TimeoutThreadArgs;
 
-void* The_Bonker(void* args){
-    int retvalue;
+//Thread che gestisce la disconnessione degli utenti per inattività
+void* Bonker(void* args){
+    //Recupero i parametri passati
     TimeoutThreadArgs* casted_args = (TimeoutThreadArgs*)args;
     while(1){
-       sleep(casted_args->required_inactivity);
-        if(time(NULL) - *casted_args->last_command_timestamp > casted_args->required_inactivity){
-            //in questo caso l'utente non ha effettuato comandi per più del tempo richiesto per la disconnessione
-            //quindi lo disconnetto
-           
-            //chiudo l'fd qui ma prima devo capire se per caso è connesso e sloggarlo (loggato=1)
+        //Aspetto per il tempo di disconnessione massimo
+        sleep(casted_args->required_inactivity);
+        //Controllo se l'utente ha superato il il tempo massimo di inattività
+        if(time(NULL) - *casted_args->last_command_timestamp > casted_args->required_inactivity){           
+            //Chiudo l'fd e controllo se è connesso: in tal caso devo sloggarlo
             pthread_mutex_lock(&lista->lock);
             Lista_Giocatori temp = lista->lista;
             while(temp != NULL){
+                //Controllo se è loggato
                 if(temp->fd_client == casted_args->fd && temp->loggato){
-                    //l'abbiamo trovato!
                     temp->loggato = 0;
                     break;
                 }
                 temp = temp->next;
             }
             pthread_mutex_unlock(&lista->lock);
+            //Invio il messaggio di disconnessione per inattività
             Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
-            //printf("%ld", casted_args->pthread_id_father);
-            //SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
-            //pthread_cancel(casted_args->pthread_id_father);
             return NULL;
         }
     }
 }
 
-
+//Funzione di comparazione per il sorting  
 int Confronta_Punti(const void *a, const void *b){
 
     Giocatore *giocatore1 = *(Giocatore **)a;
@@ -163,69 +170,77 @@ int Confronta_Punti(const void *a, const void *b){
     return giocatore2->punti - giocatore1->punti;
 }
 
-// Thread Scorer
+//Thread Scorer
 void *Thread_Scorer(void *args){
-    int numgioc;
 
+    int numgioc;
+    //Metto nella lista dello scorer solo i giocatori loggati, quindi in partita
     numgioc = Numero_Giocatori_Loggati(lista);
     Lista_Giocatori giocatori_raccolti[numgioc];
+    //Scorro la lista
     for (int i = 0; i < numgioc; i++){
         pthread_mutex_lock(&scorer_mutex);
+        //Controllo se all'interno della lista dello scorer sono presenti dei giocatori, se non lo sono aspetto
         while (Lista_Scorer == NULL){
             pthread_cond_wait(&scorer_cond, &scorer_mutex);
         }
+        //Inserisco i giocatori nella lista dei giocatori raccolti loggati
         Giocatore *temp = Lista_Scorer;
         Lista_Scorer = Lista_Scorer->next;
         giocatori_raccolti[i] = temp;
         pthread_mutex_unlock(&scorer_mutex);
     }
-    // qsort giocatori raccolti
+    //Qsort sui giocatori raccolti
     qsort(giocatori_raccolti, numgioc, sizeof(Giocatore *), Confronta_Punti);
 
+    //Alloco lo spazio per la classifica e inserisco il giocatore e di seguito il suo punteggio
     char *classifica = malloc(1024);
     for (int i = 0; i < numgioc; i++){
         char *temp = malloc(128);
         sprintf(temp, "%s;%d\n", giocatori_raccolti[i]->nome, giocatori_raccolti[i]->punti);
         strcat(classifica, temp);
     }
-    // invio classifica come csv a tutti i giocatori
+    //Invio classifica come CSV a tutti i giocatori
     for (int i = 0; i < numgioc; i++){
         Caronte(giocatori_raccolti[i]->fd_client, classifica, MSG_PUNTI_FINALI);
     }
+    //Scrivo il log della Classifica
     ScriviLog("Scorer", "Classifica\n", classifica);
     pthread_exit(NULL);
 }
 
 //Definisco la funzione che gestisce le fasi della partita
 void* Fasi_Partita(void* arg) {
-    
     Impostazioni_Gioco* argcast = (Impostazioni_Gioco*) arg;
-    argcast->file_matrice = filemat;
     FILE* tempfd;
 
-    // CONTEGGIO PAROLE E CARICAMENTO DIZIONARIO (SE LO RITOCCHI IO TI STERILIZZO)
+    //Conteggio le parole e carico il Dizionario in memoria 
     conteggio_parole = Carica_Dizionario(argcast->file_diz, parole);
     
-    //Prendo e apro il file
+    //Prendo e apro il file di matrice, se è presente
     if (argcast->file_matrice != NULL) {
         tempfd = fopen(argcast->file_matrice,"r");
     }
 
     while(1) {
+        printf("Matrice caricata: %s\n", argcast->file_matrice);
+        fflush(0);
+        //Se è presente un file di matrice, carico la riga della matrice, altrimenti la genero casualmente
         if (argcast->file_matrice != NULL) {
             Carica_Matrix_File(tempfd, matrice);
         }
         else{
             Genera_Matrix(matrice, argcast->seed);
         }
+        //Alloco lo spazio per inserire e concatenare in una stringa la matrice passata
         char* stringa_matrice = malloc(sizeof(char)*64);
         for (int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++) {
                 strcat(stringa_matrice, matrice[i][j].lettera);
-                strcat(stringa_matrice, " "); //trovare modo elegante per fare questa cosa in una sola riga, soluzione temporanea per testare features
+                strcat(stringa_matrice, " "); 
             }
         }
-        //Appena creata, invio la matrice a tutti i giocatori
+        //Appena creata, invio la matrice a tutti i giocatori loggati
         pthread_mutex_lock(&lista->lock);
             Lista_Giocatori listatemp = lista->lista;
             while(listatemp != NULL){
@@ -238,33 +253,32 @@ void* Fasi_Partita(void* arg) {
 
         pthread_mutex_unlock(&lista->lock);
         
-            
+        //Stampa di debug
         Stampa_Matrix(matrice);
-        //La partita comincia
+                                                        //La partita comincia
         ingame = 1;
         starttime = time(NULL);
-        //sleep(20);
+        //sleep(20); Sleep di debug
         sleep(argcast->durata_minuti * 60);
-        
-        //La partita è finita
+                                                        //La partita è finita
         ingame = 0;
         starttime = time(NULL);
         //Controllo quanti player loggati ci sono quando 
         pthread_mutex_lock(&lista->lock);
         Giocatore* temp = lista->lista;
         pthread_mutex_unlock(&lista->lock);
+        //Faccio partire uno scorer e n segnali tanti quanti sono i client loggati per attivare i produttori
         pthread_t scorer;
         pthread_create(&scorer, NULL, Thread_Scorer, NULL);
         while (temp != NULL) {
             if (temp->loggato == 1) {
                 pthread_kill(temp->thread, SIGUSR1);
+                Caronte(temp->fd_client, "Partita conclusa, inizio stato di pausa\n", MSG_OK);
             }
             temp = temp->next;
         }
-        //sleep(5);
+        //sleep(5); Sleep di DEBUG
         sleep(60);
-        //Funzione che azzera i punti dei client
-        //Funzione che azzera le parole dei client
     }
     return NULL;
 }
@@ -277,13 +291,10 @@ void* Client_Handler (void* arg) {
     sau.sa_handler = GestoreSigUsr1;
     sau.sa_flags = SA_RESTART;
     sigemptyset(&sau.sa_mask);
-    sau.sa_handler = GestoreSigUsr1; //temporaneo
+    sau.sa_handler = GestoreSigUsr1;
 
     //Associo il GestoreSigUsr1 al segnale di SIGUSR1
     sigaction(SIGUSR1, &sau, NULL);
-
-    //#todo variabile per timestamp ultimo comando  
-    //#todo starta un thread e passa quel timestamp come puntatore, passa anche giocatore, e quando stacchi, ricordati di controllare se per caso si e` loggato, nel caso setta loggato=0
     
     //Recupero i dati del thread
     ThreadArgs* thread_args = (ThreadArgs*) arg;
@@ -291,11 +302,12 @@ void* Client_Handler (void* arg) {
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
 
+    //Aggiungo anche alla lista degli fd quando un un client si collega
     pthread_mutex_lock(&fd_mutex);
-    Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT)); //#FLAG
+    Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT));
     lista_fd_new->next = lista_fd;
     lista_fd_new->fd_client = thread_args->fd_client;
-    //ora aggiorno il puntatore alla testa di lista fd
+    //Aggiorno il puntatore alla testa di lista fd
     lista_fd = lista_fd_new;
     pthread_mutex_unlock(&fd_mutex);
 
@@ -309,40 +321,35 @@ void* Client_Handler (void* arg) {
     //Debugging
     printf("Connesso client su fd: %d\n", fd_client);
 
-
-
-    //Facciamo partire il thread che controllerà se abbiamo inviato un msg da questo client negli ultimi tot secondi
-
-    //preparo gli args
+    //Imposto gli argomenti del thread che gestisce la disconnessione
     TimeoutThreadArgs* timeout_thread_args = (TimeoutThreadArgs*)malloc(sizeof(TimeoutThreadArgs));
     timeout_thread_args->fd = fd_client;
     timeout_thread_args->pthread_id_father = pthread_self();
-    //timeout_thread_args->required_inactivity = thread_args->tempo_disconnessione*60; 
-
-    timeout_thread_args->required_inactivity = 20; //#FLAG
+    timeout_thread_args->required_inactivity = thread_args->tempo_disconnessione*60; 
+    //timeout_thread_args->required_inactivity = 20; Timeout di DEBUG
     int last_command_timestamp = 0;
     timeout_thread_args->last_command_timestamp = &last_command_timestamp;
 
-    //qui invece lo faccio partire effettivamente
+    //Faccio partire il Thread che gestisce la disconnessione
     pthread_t Disconnettore;
-    pthread_create(&Disconnettore,NULL,The_Bonker, timeout_thread_args);
+    pthread_create(&Disconnettore,NULL,Bonker, timeout_thread_args);
 
     while (1) {
         //Memorizzo il messaggtio inviato dal client
         msg = Ade(fd_client);
-
-
         //Memorizzo il tipo di messaggio inviato dal client
         char type = (char)*msg->type;
-        printf("%c\n",type);
-        fflush(0);
-        printf("%s\n", msg->msg);
-        fflush(0);
+        //printf("%c\n",type);
+        //fflush(0);
+        //printf("%s\n", msg->msg);
+        //fflush(0);
+
+        //Alloco lo spazio per la matrice
         char* stringa_matrice = malloc(sizeof(char)*64);
-        
         //Faccio uno switch su tutti i possibili tipi di messaggi che il client può inviare, e gestisco i vari casi speciali
         switch(type){
             case MSG_REGISTRA_UTENTE:
+                //Controllo se il client è già loggato
                 if(giocatore != NULL) {
                     Caronte(fd_client, "Errore sei già loggato", MSG_ERR);
                     break;
@@ -381,6 +388,7 @@ void* Client_Handler (void* arg) {
                 giocatore->loggato = 1;
                 giocatore->lista_parole = NULL;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
+                //Invio la matrice al client appena si registra e invio anche il tempo partita
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
                         strcat(stringa_matrice, matrice[i][j].lettera);
@@ -558,8 +566,13 @@ int main (int argc, char* argv[]) {
         perror("Errore porta server");
         exit(EXIT_SUCCESS);
     }
+    //Prendo i parametri server e porta prima di fare la get opt
+    char* nome_server = argv[1];
+    int fd_server, porta_server = atoi(argv[2]), retvalue;
 
-    int opt, indice_opt = 0, seed_ricevuto = 0; 
+
+    int opt, indice_opt = 0, seed_ricevuto = 0, file_matrice_ricevuto = 0; 
+    opterr = 0;
 
     struct option long_opt[] = {
         {"matrici", required_argument, 0, OPT_MATRICE},
@@ -569,46 +582,62 @@ int main (int argc, char* argv[]) {
         {"disconnetti-dopo", required_argument, 0, OPT_DISCONNECT},
         {0, 0, 0, 0}
     };
+    //definire qui valori default
 
     Impostazioni_Gioco* settings = malloc(sizeof(Impostazioni_Gioco));
-
+    //Alloco una Matrice 4x4
+    matrice = Crea_Matrix();
     //Settaggio delle impostazioni
     settings->matrice = matrice;
     settings->file_diz = filediz;
     settings->seed = rand();
     settings->durata_minuti = 3;
-
-    //Gestire parametri passati opzionali
+    settings->tempo_disconnessione = 5;
     
+    //Gestire parametri passati opzionali
     while ((opt = getopt_long(argc, argv, "", long_opt, &indice_opt)) != -1) {
-        switch(opt) {
+        switch (opt) {
             case OPT_MATRICE:
-                settings->file_matrice = optarg;
+                FILE* matrice_open = fopen(optarg, "r");
+                if(matrice_open == NULL){
+                    printf("File matrice non esistente\n");
+                    fflush(0);
+                    exit(EXIT_SUCCESS);
+                }
+                file_matrice_ricevuto = 1;
+                settings->file_matrice = strdup(optarg);
+                Carica_Matrix_File(matrice_open, matrice);
+                fclose(matrice_open);
                 break;
             case OPT_DURATA:
+                printf("Durata impostata: %s\n", optarg);
                 settings->durata_minuti = atoi(optarg);
-                break;
-            case OPT_DIZ:
-                settings->file_diz = optarg;
                 break;
             case OPT_SEED:
                 settings->seed = atoi(optarg);
                 seed_ricevuto = 1;
                 break;
+            case OPT_DIZ:
+                settings->file_diz = strdup(filediz);
+                break;
             case OPT_DISCONNECT:
                 settings->tempo_disconnessione = atoi(optarg);
                 break;
-            case '?':
-                printf("Argomento aggiuntivo\n");
-                break;
+            default:
+                fprintf(stderr, "Usage: %s [--matrici <value>] [--durata <value>] [--seed <value>] [--diz <value>] [--disconnetti-dopo <value>]\n", argv[0]);
+                exit(EXIT_FAILURE);
         }
-
-        if (seed_ricevuto == 1 && strcmp(settings->file_matrice, filemat) != 0) {
-            perror("Errore, hai inserito sia un seed che un file matrice\n");
-            exit(EXIT_SUCCESS);
-        }
-        srand(settings->seed);
-        return 0;
+        
+    }
+    
+    if(seed_ricevuto+file_matrice_ricevuto == 2){
+        printf("Impossibile inserire contemporaneamente sia il seed che il file matrice!");
+        fflush(0);
+        exit(EXIT_SUCCESS);    
+    }else if(seed_ricevuto && !file_matrice_ricevuto){
+        printf("Non è stato passato il file matrice, andremo con il seed...");
+        fflush(0);
+        settings->file_matrice = NULL;
     }
 
     //Struct sigaction
@@ -620,12 +649,9 @@ int main (int argc, char* argv[]) {
 
     //Associo il GestoreSigint al segnale di SIGINT
     sigaction(SIGINT, &sa, NULL);
-
-    //Alloco una Matrice 4x4
-    matrice = Crea_Matrix();
     
     //Creo la lista vuota di Giocatori
-    printf("Provo a creare la lista...\n");
+    printf("Provo a creare la lista giocatori...\n");
     fflush(0);
     //Creo la lista di giocatori
     lista = malloc(sizeof(Lista_Giocatori_Concorrente));
@@ -633,14 +659,10 @@ int main (int argc, char* argv[]) {
     InizializzaMutexLog();
     
 
-    //creo l'identificatore per il socket, salvo e casto come intero la porta del server
-    int fd_server, porta_server = atoi(argv[2]), retvalue;
+    
     
     //Creo il thread che gestisce le fasi della partita
     pthread_t t_fasi_partita;
-
-    //salvo il nome del server
-    char* nome_server = argv[1];
 
     //creo una struct con le informazioni del server
     struct sockaddr_in info_server;
@@ -669,7 +691,7 @@ int main (int argc, char* argv[]) {
         thread_args->file_diz = settings->file_diz;
         thread_args->tempo_partita = settings->durata_minuti*60;
         thread_args->tempo_disconnessione = settings->tempo_disconnessione;
-
+        
                 
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");
         //Inizializza ThreadArgs
