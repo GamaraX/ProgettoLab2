@@ -67,3 +67,7 @@ void Inizializza_Lista(Lista_Giocatori_Concorrente* lista_conc);
 Lista_Giocatori RecuperaUtente(Lista_Giocatori_Concorrente* lista_conc, char* utente);
 //Funzione che cerca le parole nella lista delle parole dell'utente
 int Cerca_Parola(Lista_Parole lista_parole, char* parola_proposta);
+
+
+
+void Stampa_FDCLIENT(Lista_FDCLIENT lista);

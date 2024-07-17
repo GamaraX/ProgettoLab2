@@ -199,3 +199,13 @@ int Cerca_Parola(Lista_Parole lista_parole, char* parola_proposta) {
     //L'utente non ha mai inserito questa parola
     return 1;
 }
+
+// Funzione per stampare la lista di fd_client
+void Stampa_FDCLIENT(Lista_FDCLIENT lista) {
+    FDCLIENT* current = lista;
+    while (current != NULL) {
+        printf("fd_client: %d\n", current->fd_client);
+        fflush(0);
+        current = current->next;
+    }
+}

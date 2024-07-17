@@ -8,3 +8,6 @@ pisa;Immissione;casi
 pisa;Immissione;quasi
 pisa;Registrato; 
 pisa;Immissione;casi
+Scorer;Classifica
+;
+pisa;Registrato; 

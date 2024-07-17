@@ -148,9 +148,8 @@ void* The_Bonker(void* args){
             pthread_mutex_unlock(&lista->lock);
             Caronte(casted_args->fd, "Disconnessione per inattività", MSG_FINE);
             //printf("%ld", casted_args->pthread_id_father);
-            lista_fd = Rimuovi_FD(lista_fd, casted_args->fd);
-            SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
-            pthread_cancel(casted_args->pthread_id_father);
+            //SYSC(retvalue, close(casted_args->fd), "Errore close Bonker");
+            //pthread_cancel(casted_args->pthread_id_father);
             return NULL;
         }
     }
@@ -291,12 +290,15 @@ void* Client_Handler (void* arg) {
     int fd_client = thread_args->fd_client;
     Lista_Giocatori_Concorrente* lista = thread_args->lista;
     int tempo_partita = thread_args->tempo_partita;
+
+    pthread_mutex_lock(&fd_mutex);
     Lista_FDCLIENT lista_fd_new = (Lista_FDCLIENT)malloc(sizeof(FDCLIENT)); //#FLAG
     lista_fd_new->next = lista_fd;
     lista_fd_new->fd_client = thread_args->fd_client;
     //ora aggiorno il puntatore alla testa di lista fd
     lista_fd = lista_fd_new;
-    
+    pthread_mutex_unlock(&fd_mutex);
+
 
     //Inizializzo variabili
     Giocatore* giocatore = NULL;
@@ -322,8 +324,8 @@ void* Client_Handler (void* arg) {
     timeout_thread_args->last_command_timestamp = &last_command_timestamp;
 
     //qui invece lo faccio partire effettivamente
-    pthread_t ciao;
-    pthread_create(&ciao,NULL,The_Bonker, timeout_thread_args);
+    pthread_t Disconnettore;
+    pthread_create(&Disconnettore,NULL,The_Bonker, timeout_thread_args);
 
     while (1) {
         //Memorizzo il messaggtio inviato dal client
@@ -395,7 +397,8 @@ void* Client_Handler (void* arg) {
                 if (giocatore != NULL) {
                     giocatore->loggato = 0;
                 }
-                lista_fd = Rimuovi_FD (lista_fd,fd_client);
+                lista_fd = Rimuovi_FD(lista_fd,fd_client);
+                
                 pthread_exit(NULL);
                 break;
             case MSG_MATRICE:
