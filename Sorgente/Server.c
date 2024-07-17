@@ -295,7 +295,7 @@ void* Client_Handler (void* arg) {
     lista_fd_new->next = lista_fd;
     lista_fd_new->fd_client = thread_args->fd_client;
     //ora aggiorno il puntatore alla testa di lista fd
-    lista_fd = lista_fd_new;    
+    lista_fd = lista_fd_new;
     
 
     //Inizializzo variabili
@@ -665,6 +665,7 @@ int main (int argc, char* argv[]) {
         ThreadArgs* thread_args = malloc(sizeof(ThreadArgs));
         thread_args->file_diz = settings->file_diz;
         thread_args->tempo_partita = settings->durata_minuti*60;
+        thread_args->tempo_disconnessione = settings->tempo_disconnessione;
 
                 
         SYSC(fdtemp, accept(fd_server, NULL, 0), "Errore accept server");

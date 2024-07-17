@@ -70,7 +70,7 @@ void* receiver(void* args) {
                 printf("\n");
                 fflush(0);
                 Stampa_Matrix(matrice);
-                //fare free matrice
+                
                 break;
 
             case MSG_PUNTI_PAROLA:

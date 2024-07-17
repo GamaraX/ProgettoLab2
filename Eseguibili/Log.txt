@@ -3,3 +3,8 @@ Scorer;Classifica
 ;
 Scorer;Classifica
 ;
+pisa;Registrato; 
+pisa;Immissione;casi
+pisa;Immissione;quasi
+pisa;Registrato; 
+pisa;Immissione;casi
