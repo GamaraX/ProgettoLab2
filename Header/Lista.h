@@ -48,7 +48,7 @@ typedef struct arg{
 } ThreadArgs;
 
 //Funzione che permette al client di giocare
-void* asdrubale (void* arg);
+void* Client_Handler (void* arg);
 //Funzione per aggiungere Giocatori
 void Aggiungi_Giocatore(Lista_Giocatori_Concorrente* lista_conc, char* nome, int fd);
 //Funzione per rimuovere Giocatori

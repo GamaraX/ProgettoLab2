@@ -28,5 +28,5 @@ int Controlla_Parola_Matrice(Lettera** matrice, char* parola_utente);
 //Funzione che esegue la DFS
 int DFS_Matrix(Lettera** matrice, char* parola_utente, int pos, int riga, int colonna);
 
-//Funzione che dealloca la matrice, in particolare dealloca tutti i campi delle lettere
+//Funzione che svuota la matrice, in particolare svuota tutti i campi delle lettere
 void Libera_Matrix(Lettera** matrice);

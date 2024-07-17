@@ -27,5 +27,3 @@ int Caronte(int fd, char* msg, char carattere);
 
 //Definizione funzione che riceve messaggi
 Msg* Ade(int fd);
-
-
