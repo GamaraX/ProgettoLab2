@@ -32,7 +32,7 @@ void ScriviLog(char* utente, char* azione, char* testo) {
     }
     //Scrivo nel log la terna in formato nome utente;azione eseguita;testo (viene memorizzata la parola o la classifica, altrimenti è un white space)
     fprintf(tempfd, "%s;%s;%s\n", utente, azione, testo);
-    fflush(0);
+    fflush(NULL);
     //Chiudo il file
     fclose(tempfd);
     pthread_mutex_unlock(&log_mutex);

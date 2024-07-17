@@ -205,7 +205,7 @@ void *Thread_Scorer(void *args){
         Caronte(giocatori_raccolti[i]->fd_client, classifica, MSG_PUNTI_FINALI);
     }
     //Scrivo il log della Classifica
-    ScriviLog("Scorer", "Classifica\n", classifica);
+    ScriviLog("Scorer", "Classifica", classifica);
     pthread_exit(NULL);
 }
 
@@ -390,6 +390,7 @@ void* Client_Handler (void* arg) {
                 giocatore->loggato = 1;
                 giocatore->lista_parole = NULL;
                 Caronte(fd_client, "Registrazione effettuata correttamente", MSG_OK);
+                stringa_matrice[0] = '\0';
                 //Invio la matrice al client sotto forma di stringa appena si registra e invio anche il tempo partita
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
@@ -426,11 +427,10 @@ void* Client_Handler (void* arg) {
                     Caronte(fd_client, tempo(60), MSG_TEMPO_ATTESA);
                     break;
                 }
+                stringa_matrice[0] = '\0';
                 //Se non sono in fase di pausa, invio la matrice sotto forma di stringa e il tempo partita
                 for (int i = 0; i < 4; i++) {
                     for(int j = 0; j < 4; j++) {
-                        printf("Carattere della matrice posizione %d,%d:%s\n", i,j,matrice[i][j].lettera);
-                        fflush(NULL);
                         strcat(stringa_matrice, matrice[i][j].lettera);
                         strcat(stringa_matrice, " "); 
                     }
@@ -470,7 +470,7 @@ void* Client_Handler (void* arg) {
                         giocatore->lista_parole = par; 
                     }
                     //Scrivo il Log
-                    ScriviLog(giocatore->nome, "Immissione", msg->msg);
+                    ScriviLog(giocatore->nome, "Immissione", msg->msg); 
                     fflush(NULL);
                     //Assegno i punti
                     giocatore->punti += punti;
